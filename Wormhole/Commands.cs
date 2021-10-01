@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -108,7 +109,7 @@ namespace Wormhole
                         grid.Close();
                     }
 
-                foreach (var server in Plugin.Config.WormholeGates)
+                foreach (var gateViewModel in Plugin.Config.WormholeGates)
                 {
                     var prefab = type switch
                     {
@@ -120,62 +121,34 @@ namespace Wormhole
                         _ => "WORMHOLE"
                     };
 
-                    var grids = MyPrefabManager.Static.GetGridPrefab(prefab);
-                    var objectBuilderList = new List<MyObjectBuilder_EntityBase>();
+                    var grids = MyPrefabManager.Static.GetGridPrefab(prefab).ToList();
 
-                    foreach (var grid in grids)
+                    foreach (var cubeBlock in grids.SelectMany(static grid => grid.CubeBlocks))
                     {
-                        foreach (var cubeBlock in grid.CubeBlocks)
-                            if (selfowned)
-                            {
-                                cubeBlock.Owner = Context.Player.IdentityId;
-                                cubeBlock.BuiltBy = Context.Player.IdentityId;
-                            }
-                            else
-                            {
-                                cubeBlock.Owner = ownerid;
-                                cubeBlock.BuiltBy = ownerid;
-                            }
-
-                        objectBuilderList.Add(grid);
-                    }
-
-                    var firstGrid = true;
-                    double deltaX = 0;
-                    double deltaY = 0;
-                    double deltaZ = 0;
-
-                    foreach (var grid in grids)
-                    {
-                        var position = grid.PositionAndOrientation;
-                        var realPosition = position.Value;
-                        var currentPosition = realPosition.Position;
-
-                        if (firstGrid)
+                        if (selfowned)
                         {
-                            deltaX = server.X - currentPosition.X;
-                            deltaY = server.Y - currentPosition.Y;
-                            deltaZ = server.Z - currentPosition.Z;
-
-                            currentPosition.X = server.X;
-                            currentPosition.Y = server.Y;
-                            currentPosition.Z = server.Z;
-
-                            firstGrid = false;
+                            cubeBlock.Owner = Context.Player.IdentityId;
+                            cubeBlock.BuiltBy = Context.Player.IdentityId;
                         }
                         else
                         {
-                            currentPosition.X += deltaX;
-                            currentPosition.Y += deltaY;
-                            currentPosition.Z += deltaZ;
+                            cubeBlock.Owner = ownerid;
+                            cubeBlock.BuiltBy = ownerid;
                         }
-
-                        realPosition.Position = currentPosition;
-                        grid.PositionAndOrientation = realPosition;
                     }
-
-                    MyEntities.RemapObjectBuilderCollection(objectBuilderList);
-                    MyEntities.Load(objectBuilderList, out _);
+                    
+                    MyEntities.RemapObjectBuilderCollection(grids);
+                    Utilities.UpdateGridsPositionAndStop(grids, gateViewModel.Position);
+                    
+                    foreach (var grid in grids)
+                    {
+                        grid.IsStatic = !prefab.Contains("rotating", StringComparison.OrdinalIgnoreCase);
+                        grid.Immune = true;
+                        grid.Editable = false;
+                        
+                        // Queue work for creation thread, so no lags on main
+                        MyEntities.CreateAsync(grid, true);
+                    }
                 }
 
                 Context.Respond(
