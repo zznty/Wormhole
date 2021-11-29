@@ -35,7 +35,7 @@ namespace Wormhole.Managers
             base.Attach();
             foreach (var jd in Plugin.Instance.Config.JumpDriveSubId.Split(','))
             {
-                JdDefinitions.Add(MyDefinitionId.Parse($"{nameof(MyObjectBuilder_JumpDrive)}/{jd}"));
+                JdDefinitions.Add(new(typeof(MyObjectBuilder_JumpDrive), jd));
             }
             Torch.GameStateChanged += TorchOnGameStateChanged;
         }

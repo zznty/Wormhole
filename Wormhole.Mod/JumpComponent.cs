@@ -25,8 +25,6 @@ namespace Wormhole.Mod
         
         public readonly Dictionary<uint, GateDataMessage> Gates = new Dictionary<uint, GateDataMessage>();
         private readonly MyEntity3DSoundEmitter _soundEmitter = new MyEntity3DSoundEmitter(null);
-        
-        private GateVisuals _gateVisuals => GateVisuals.Instance;
 
         public readonly List<SerializableDefinitionId> JdDefinitionIds = new List<SerializableDefinitionId>();
         public bool? WorkWithAllJds;
@@ -104,7 +102,6 @@ namespace Wormhole.Mod
 
         private void OnJumpStarted(GateDataMessage gate, IMyCubeGrid grid)
         {
-            _gateVisuals.EnableEffectForGate(gate.Id);
             _soundEmitter.Entity = (MyEntity) grid;
             _soundEmitter.PlaySound(ChargeSound);
             
@@ -135,7 +132,6 @@ namespace Wormhole.Mod
         }
         private void OnJumpSucceeded(GateDataMessage gate, IMyCubeGrid grid)
         {
-            _gateVisuals.DisableEffectForGate(gate.Id);
             if (MyAPIGateway.Session.ControlledObject is IMyShipController &&
                 ((IMyShipController)MyAPIGateway.Session.ControlledObject).CubeGrid == grid)
             {
@@ -149,7 +145,6 @@ namespace Wormhole.Mod
             foreach (var gate in gates)
             {
                 Gates[gate.Id] = gate;
-                _gateVisuals.CreateEffectForGate(gate);
             }
         }
 

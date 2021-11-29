@@ -169,6 +169,8 @@
     <Compile Include="Managers\JumpStatus.cs" />
     <Compile Include="Managers\JumpStatusMessage.cs" />
     <Compile Include="Managers\ServerQueryManager.cs" />
+    <Compile Include="Managers\SpawnManager.cs" />
+    <Compile Include="Managers\TransferManager.cs" />
     <Compile Include="Managers\WormholeDiscoveryManager.cs" />
     <Compile Include="TransferFile.cs" />
     <Compile Include="Utilities.cs" />

@@ -21,7 +21,7 @@ namespace Wormhole.Managers
     {
         private const ushort JumpStatusNetId = 3456;
         private const ushort GateDataNetId = 3457;
-        private const string ParticleDefaultId = "p_subspace_start";
+        private const string ParticleDefaultId = "";
 
         private readonly GatesMessage _message = new ();
 
