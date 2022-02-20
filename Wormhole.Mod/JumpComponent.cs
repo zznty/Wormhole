@@ -14,12 +14,11 @@ using VRageMath;
 
 namespace Wormhole.Mod
 {
-    [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
+    [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation)]
     public class JumpComponent : MySessionComponentBase
     {
-        private static readonly MySoundPair ChargeSound = new MySoundPair("WormholeJumpCharge");
-        private static readonly MySoundPair JumpSound = new MySoundPair("WormholeJumpPerform");
-        private static readonly MySoundPair AfterSound = new MySoundPair("WormholeJumpAfter");
+        private static readonly MySoundPair ChargeSound = new MySoundPair("ShipJumpDriveCharging");
+        private static readonly MySoundPair AfterSound = new MySoundPair("ShipJumpDriveJumpIn");
 
         public static JumpComponent Instance;
         
@@ -28,6 +27,55 @@ namespace Wormhole.Mod
 
         public readonly List<SerializableDefinitionId> JdDefinitionIds = new List<SerializableDefinitionId>();
         public bool? WorkWithAllJds;
+
+        private readonly Dictionary<IMyCubeGrid, WarpEffect> _warpEffects = new Dictionary<IMyCubeGrid, WarpEffect>();
+
+        private class WarpEffect : IDisposable
+        {
+            public static bool TryCreate(Vector3D gatePos, IMyCubeGrid cubeGrid, string name, out WarpEffect effect)
+            {
+                var dirToGateNorm = cubeGrid.GetPosition() - gatePos;
+                dirToGateNorm.Normalize();
+                
+                var matrix = MatrixD.CreateFromDir(dirToGateNorm);
+                var offset = dirToGateNorm * cubeGrid.WorldAABB.HalfExtents.AbsMax() * 2;
+                matrix.Translation = cubeGrid.WorldAABB.Center + offset;
+                var position = cubeGrid.GetPosition();
+                
+                MyParticleEffect particle;
+                if (!MyParticlesManager.TryCreateParticleEffect(name, ref matrix, ref position,
+                        cubeGrid.Render.ParentIDs[0], out particle))
+                {
+                    effect = null;
+                    return false;
+                }
+
+                effect = new WarpEffect
+                {
+                    Offset = offset,
+                    CubeGrid = cubeGrid,
+                    Particle = particle
+                };
+                return true;
+            }
+
+            public IMyCubeGrid CubeGrid { get; private set; }
+            public MyParticleEffect Particle { get; private set; }
+            public Vector3 Offset { get; private set; }
+
+            public void Update()
+            {
+                var pos = CubeGrid.WorldAABB.Center + Offset;
+                Particle.SetTranslation(ref pos);
+            }
+
+            public void Dispose()
+            {
+                Particle.Stop();
+                MyParticlesManager.RemoveParticleEffect(Particle);
+                Particle = null;
+            }
+        }
 
         public override void Init(MyObjectBuilder_SessionComponent sessionComponent)
         {
@@ -104,6 +152,16 @@ namespace Wormhole.Mod
         {
             _soundEmitter.Entity = (MyEntity) grid;
             _soundEmitter.PlaySound(ChargeSound);
+
+            WarpEffect effect;
+            if (_warpEffects.TryGetValue(grid, out effect))
+            {
+                effect.Dispose();
+                _warpEffects.Remove(grid);
+            }
+            
+            if (WarpEffect.TryCreate(gate.Position, grid, "Warp", out effect))
+                _warpEffects.Add(grid, effect);
             
             // if (MyAPIGateway.Session.ControlledObject is IMyShipController &&
             //     ((IMyShipController)MyAPIGateway.Session.ControlledObject).CubeGrid == grid)
@@ -115,7 +173,12 @@ namespace Wormhole.Mod
 
         private void OnJumpReady(GateDataMessage gate, IMyCubeGrid grid)
         {
-            _soundEmitter.PlaySound(JumpSound, true);
+            WarpEffect effect;
+            if (!_warpEffects.TryGetValue(grid, out effect)) 
+                return;
+            
+            effect.Dispose();
+            _warpEffects.Remove(grid);
         }
         private void OnJumpPerform(GateDataMessage gate, IMyCubeGrid grid, Vector3D destination)
         {
@@ -153,6 +216,15 @@ namespace Wormhole.Mod
             JdDefinitionIds.Clear();
             JdDefinitionIds.AddRange(definitionIds);
             WorkWithAllJds = workWithAllJds;
+        }
+
+        public override void UpdateBeforeSimulation()
+        {
+            base.UpdateBeforeSimulation();
+            foreach (var warpEffect in _warpEffects.Values)
+            {
+                warpEffect.Update();
+            }
         }
     }
 }

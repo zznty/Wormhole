@@ -5,6 +5,7 @@ using System.Linq;
 using NLog;
 using ParallelTasks;
 using Sandbox.Common.ObjectBuilders;
+using Sandbox.Engine.Multiplayer;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Multiplayer;
 using Sandbox.Game.World;
@@ -13,7 +14,10 @@ using Torch.Managers;
 using Torch.Utils;
 using VRage;
 using VRage.Game;
+using VRage.Game.Entity;
 using VRage.Game.ObjectBuilders.Components;
+using VRage.Network;
+using Wormhole.Patches;
 
 namespace Wormhole.Managers
 {
@@ -25,23 +29,53 @@ namespace Wormhole.Managers
         {
         }
 
-        public Task SpawnGridsParallel(IEnumerable<MyObjectBuilder_CubeGrid> grids, Action<ICollection<MyCubeGrid>> onCompletedCallback = null)
+        public void SpawnGridsParallel(IEnumerable<MyObjectBuilder_CubeGrid> grids,
+            Action<ICollection<MyCubeGrid>> onCompletedCallback = null)
         {
-            return Parallel.Start(() =>
+            Parallel.Start(() =>
             {
-                onCompletedCallback?.Invoke(SpawnInternal(grids));
-            });
+                var spawnedGrids = SpawnInternal(grids);
+                onCompletedCallback?.Invoke(spawnedGrids);
+            }).WaitOrExecute();
         }
 
         private static ICollection<MyCubeGrid> SpawnInternal(IEnumerable<MyObjectBuilder_CubeGrid> grids)
         {
             return grids.Select(gridBuilder =>
             {
+                Log.Debug($"Spawning grid {gridBuilder.DisplayName}");
                 MyEntities.RemapObjectBuilder(gridBuilder);
                 var grid = (MyCubeGrid)MyEntities.CreateFromObjectBuilderNoinit(gridBuilder);
-                MyEntities.InitAsync(grid, gridBuilder, true);
+                MyEntities.InitAsync(grid, gridBuilder, true, DoneHandler);
                 return grid;
             }).ToArray();
+        }
+
+        private static void DoneHandler(MyEntity obj)
+        {
+            var grid = (MyCubeGrid) obj;
+
+            if (grid is null)
+                return;
+            
+            foreach (var cockpit in grid.GetFatBlocks<MyCockpit>().Where(b => b.Pilot is { }))
+            {
+                if (cockpit.Pilot.GetIdentity() is { } identity && Sync.Players.TryGetPlayerId(identity.IdentityId, out var playerId))
+                {
+                    identity.ChangeCharacter(cockpit.Pilot);
+                    if (Sync.Players.GetPlayerById(playerId) is not { } player) 
+                        continue;
+                    
+                    MyMultiplayer.RaiseStaticEvent(_ => MySession.SetSpectatorPositionFromServer,
+                        cockpit.PositionComp.GetPosition(), new(playerId.SteamId));
+                    MySession.SendVicinityInformation(cockpit.CubeGrid.EntityId, new(playerId.SteamId));
+                    Sync.Players.SetControlledEntity(playerId.SteamId, cockpit);
+                    cockpit.Pilot.SetPlayer(player);
+                    Sync.Players.RevivePlayer(player);
+                }
+                else
+                    Log.Warn("Detected character without identity. Clang magic may occur");
+            }
         }
 
         public void RemapOwnership(TransferFile file, ulong requester)
