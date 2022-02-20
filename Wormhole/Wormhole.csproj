@@ -11,6 +11,7 @@
   </PropertyGroup>
   <Target Name="ZipAndCopy" AfterTargets="Build">
     <WriteLinesToFile File="$(TargetDir)manifest.xml" Lines="$([System.IO.File]::ReadAllText('manifest.xml').Replace('{Version}','$(InformationalVersion)'))" Overwrite="true" Encoding="Unicode" />
+    <MakeDir Directories="$(SolutionDir)zip" ContinueOnError="true" />
     <ZipDirectory DestinationFile="$(SolutionDir)zip\$(AssemblyName).zip" Overwrite="true" SourceDirectory="$(TargetDir)" />
     <Copy SourceFiles="$(SolutionDir)zip\$(AssemblyName).zip" DestinationFiles="E:\torch-server-3\Plugins\$(AssemblyName).zip" OverwriteReadOnlyFiles="true" />
     <Copy SourceFiles="$(SolutionDir)zip\$(AssemblyName).zip" DestinationFiles="E:\torch-server-2\Plugins\$(AssemblyName).zip" OverwriteReadOnlyFiles="true" />
