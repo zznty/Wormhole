@@ -6,6 +6,7 @@ using Torch.API;
 using Torch.API.Managers;
 using Torch.Managers;
 using Torch.Server.Managers;
+using Wormhole.Patches;
 
 namespace Wormhole.Managers
 {
@@ -20,30 +21,29 @@ namespace Wormhole.Managers
         public TransferManager(ITorchBase torchInstance) : base(torchInstance)
         {
         }
-
+        
         public override void Attach()
         {
             base.Attach();
-            Torch.GameStateChanged += (_, state) =>
-            {
-                if (state != TorchGameState.Loaded)
-                    return;
-
-                Torch.CurrentSession.Managers.GetManager<MultiplayerManagerDedicated>().PlayerJoined += MultiplayerOnPlayerJoined;
-            };
+            RequestRespawnPatch.RespawnScreenRequest = RespawnScreenRequest;
         }
 
-        private void MultiplayerOnPlayerJoined(IPlayer player)
+        public override void Detach()
         {
-            if (!_queue.TryGetValue(player.SteamId, out var value))
-                return;
+            base.Detach();
+            RequestRespawnPatch.RespawnScreenRequest = null;
+        }
+
+        private bool RespawnScreenRequest(ulong clientId)
+        {
+            if (!_queue.TryGetValue(clientId, out var value))
+                return false;
 
             var (file, fileInfo) = value;
-            Parallel.Start(() =>
-            {
-                if (ProcessTransfer(file, fileInfo))
-                    _queue.TryRemove(player.SteamId, out _);
-            });
+            
+            Log.Info($"Queued grid is being spawned {fileInfo.CreateLogString()}");
+
+            return ProcessTransfer(file, fileInfo) && _queue.TryRemove(clientId, out _);
         }
 
         public void QueueIncomingTransfer(TransferFile file, Utilities.TransferFileInfo fileTransferInfo)

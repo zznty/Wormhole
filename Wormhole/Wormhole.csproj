@@ -5,8 +5,7 @@
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <Target Name="ZipAndCopy" AfterTargets="Build">
-    <ZipDirectory DestinationFile="$(SolutionDir)zip\$(AssemblyName).zip" Overwrite="true" 
-                  SourceDirectory="$(TargetDir)" />
+    <ZipDirectory DestinationFile="$(SolutionDir)zip\$(AssemblyName).zip" Overwrite="true" SourceDirectory="$(TargetDir)" />
     <Copy SourceFiles="$(SolutionDir)zip\$(AssemblyName).zip" DestinationFiles="E:\torch-server-3\Plugins\$(AssemblyName).zip" OverwriteReadOnlyFiles="true" />
     <Copy SourceFiles="$(SolutionDir)zip\$(AssemblyName).zip" DestinationFiles="E:\torch-server-2\Plugins\$(AssemblyName).zip" OverwriteReadOnlyFiles="true" />
   </Target>
