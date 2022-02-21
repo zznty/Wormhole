@@ -1,7 +1,9 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Wormhole.ViewModels;
 
 namespace Wormhole.Views
@@ -40,7 +42,7 @@ namespace Wormhole.Views
 
             _selectedGate.Name = Nameinput.Text;
             _selectedGate.Description = Descriptioninput.Text;
-            _selectedGate.HexColor = HexColorinput.Text;
+            _selectedGate.HexColor = GateColorPicker.SelectedColor?.ToHexString() ?? string.Empty;
             _selectedGate.X = xCord;
             _selectedGate.Y = yCord;
             _selectedGate.Z = zCord;
@@ -50,12 +52,15 @@ namespace Wormhole.Views
             Plugin.Config.WormholeGates.Add(_selectedGate);
             Nameinput.Text = string.Empty;
             Descriptioninput.Text = string.Empty;
-            HexColorinput.Text = string.Empty;
+            GateColorPicker.IsOpen = false;
+            GateColorPicker.SelectedColor = null;
+            GateColorPicker.IsEnabled = false;
             Xinput.Text = string.Empty;
             Yinput.Text = string.Empty;
             Zinput.Text = string.Empty;
             SendToHinput.Text = string.Empty;
             _selectedGate = new ();
+            DestinationsButton.IsEnabled = false;
         }
 
         private void Del_OnClick(object sender, RoutedEventArgs e)
@@ -70,13 +75,22 @@ namespace Wormhole.Views
 
             Nameinput.Text = gate.Name;
             Descriptioninput.Text = gate.Description;
-            HexColorinput.Text = gate.HexColor;
+            try
+            {
+                GateColorPicker.SelectedColor = (Color) ColorConverter.ConvertFromString(gate.HexColor)!;
+            }
+            catch (FormatException)
+            {
+                GateColorPicker.SelectedColor = null;
+            }
+            GateColorPicker.IsEnabled = true;
             Xinput.Text = gate.X.ToString(CultureInfo.InvariantCulture);
             Yinput.Text = gate.Y.ToString(CultureInfo.InvariantCulture);
             Zinput.Text = gate.Z.ToString(CultureInfo.InvariantCulture);
             SendToHinput.Text = string.Join(";", gate.Destinations.Select(static b => b.Id));
             Plugin.Config.WormholeGates.Remove(gate);
             _selectedGate = gate;
+            DestinationsButton.IsEnabled = true;
         }
 
         private void DestinationsButton_OnClick(object sender, RoutedEventArgs e)
