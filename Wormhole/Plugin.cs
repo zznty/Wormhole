@@ -325,6 +325,8 @@ namespace Wormhole
                         yield return block.Owner;
                     if (block.BuiltBy > 0)
                         yield return block.BuiltBy;
+                    if (block is MyObjectBuilder_Cockpit {Pilot: { }} cockpit)
+                        yield return cockpit.Pilot.OwningPlayerIdentityId!.Value;
                 }
 
                 var identitiesMap = objectBuilders.SelectMany(static b => b.CubeBlocks)
