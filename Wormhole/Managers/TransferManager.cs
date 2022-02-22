@@ -1,11 +1,9 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using NLog;
-using ParallelTasks;
 using Sandbox.Engine.Multiplayer;
 using Torch.API;
-using Torch.API.Managers;
 using Torch.Managers;
-using Torch.Server.Managers;
 using Wormhole.Patches;
 
 namespace Wormhole.Managers
@@ -43,7 +41,20 @@ namespace Wormhole.Managers
             
             Log.Info($"Queued grid is being spawned {fileInfo.CreateLogString()}");
 
-            return ProcessTransfer(file, fileInfo) && _queue.TryRemove(clientId, out _);
+            bool result;
+
+            try
+            {
+                result = ProcessTransfer(file, fileInfo);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Error while transfer process");
+                MyMultiplayer.Static.DisconnectClient(clientId);
+                return false;
+            }
+            
+            return result && _queue.TryRemove(clientId, out _);
         }
 
         public void QueueIncomingTransfer(TransferFile file, Utilities.TransferFileInfo fileTransferInfo)
