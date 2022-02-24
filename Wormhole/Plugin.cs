@@ -201,18 +201,39 @@ namespace Wormhole
                         !_discoveryManager.IsLocalGate(destination.Name) &&
                         _discoveryManager.GetGateByName(destination.Name, out var address) is { })
                     {
-                        var result =
-                            (await Task.WhenAll(jumpTask, _serverQueryManager.IsServerFull(address))).Aggregate(
-                                static(a, b) => a && b);
+                        var serverQueryTask = _serverQueryManager.GetServerStatus(address);
+                        await Task.WhenAll(jumpTask, serverQueryTask);
 
-                        if (result)
+                        void Respond(string msg)
                         {
-                            MyVisualScriptLogicProvider.SendChatMessage("Destination server is FULL!", "Wormhole",
+                            MyVisualScriptLogicProvider.SendChatMessage(msg, "Wormhole",
                                 playerInCharge.Identity.IdentityId, MyFontEnum.Red);
 
-                            MyVisualScriptLogicProvider.ShowNotification("Destination server is FULL!", 15000,
+                            MyVisualScriptLogicProvider.ShowNotification(msg, 15000,
                                 MyFontEnum.Red, playerInCharge.Identity.IdentityId);
-                            return;
+                        } 
+                        
+                        switch (serverQueryTask.Result)
+                        {
+                            case ServerStatus.CanAccept:
+                                break;
+                            case ServerStatus.Full:
+                                Respond("Destination server is FULL!");
+                                Log.Info($"Destination server is full for {playerInCharge.DisplayName} ({playerInCharge.Id.SteamId})");
+                                return;
+                            case ServerStatus.RequestTimeout:
+                                Respond("Destination server is not responding!");
+                                Log.Info($"Destination server is not responding for {playerInCharge.DisplayName} ({playerInCharge.Id.SteamId})");
+                                return;
+                            case ServerStatus.Loading:
+                                Respond("Destination server is in loading, please wait.");
+                                Log.Info($"Destination server is in loading for {playerInCharge.DisplayName} ({playerInCharge.Id.SteamId})");
+                                return;
+                            case ServerStatus.UnknownError:
+                                Respond("Unknown error occurred when checking destination server status,\nlet admin take actions.");
+                                return;
+                            default:
+                                throw new ArgumentOutOfRangeException();
                         }
                     }
                     else
