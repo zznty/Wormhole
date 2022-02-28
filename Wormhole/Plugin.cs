@@ -410,7 +410,7 @@ namespace Wormhole
 
             var changes = false;
 
-            foreach (var file in Directory.EnumerateFiles(_gridDir, "*.sbc")
+            foreach (var file in Directory.EnumerateFiles(_gridDir, "*.sbcB5")
                     .Where(s => Path.GetFileNameWithoutExtension(s).Split('_')[0] == wormholeName))
                 //if file not null if file exists if file is done being sent and if file hasnt been received before
             {
@@ -447,9 +447,19 @@ namespace Wormhole
                 _transferManager.QueueIncomingTransfer(transferFile, fileTransferInfo);
 
                 changes = true;
-                var backupPath = Path.Combine(_gridDirBackup, fileName);
-                if (!File.Exists(backupPath))
-                    File.Copy(Path.Combine(_gridDir, fileName), backupPath);
+                var backupFileName = fileName;
+                if (File.Exists(Path.Combine(_gridDirBackup, backupFileName)))
+                {
+                    var transferString = Path.GetFileNameWithoutExtension(backupFileName);
+                    var i = 0;
+                    do
+                    {
+                        backupFileName = $"{transferString}_{++i}.sbcB5";
+                    } while (File.Exists(Path.Combine(_gridDirBackup, backupFileName)));
+                }
+                
+                File.Copy(Path.Combine(_gridDir, fileName), Path.Combine(_gridDirBackup, backupFileName));
+
                 File.Delete(Path.Combine(_gridDir, fileName));
             }
 

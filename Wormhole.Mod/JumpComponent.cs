@@ -32,13 +32,13 @@ namespace Wormhole.Mod
 
         private class WarpEffect : IDisposable
         {
-            public static bool TryCreate(Vector3D gatePos, IMyCubeGrid cubeGrid, string name, out WarpEffect effect)
+            public static bool TryCreate(IMyCubeGrid cubeGrid, string name, out WarpEffect effect)
             {
-                var dirToGateNorm = cubeGrid.GetPosition() - gatePos;
-                dirToGateNorm.Normalize();
+                var dir = cubeGrid.GetFatBlocks<IMyCockpit>().FirstOrDefault(b => b.IsMainCockpit || b.IsUnderControl)
+                    ?.WorldMatrix.Forward ?? cubeGrid.WorldMatrix.Forward;
+                var matrix = MatrixD.CreateFromDir(-dir);
                 
-                var matrix = MatrixD.CreateFromDir(dirToGateNorm);
-                var offset = dirToGateNorm * cubeGrid.WorldAABB.HalfExtents.AbsMax() * 2;
+                var offset = dir * cubeGrid.WorldAABB.HalfExtents.AbsMax() * 2;
                 matrix.Translation = cubeGrid.WorldAABB.Center + offset;
                 var position = cubeGrid.GetPosition();
                 
@@ -160,7 +160,7 @@ namespace Wormhole.Mod
                 _warpEffects.Remove(grid);
             }
             
-            if (WarpEffect.TryCreate(gate.Position, grid, "Warp", out effect))
+            if (WarpEffect.TryCreate(grid, "Warp", out effect))
                 _warpEffects.Add(grid, effect);
             
             // if (MyAPIGateway.Session.ControlledObject is IMyShipController &&
