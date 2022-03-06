@@ -74,7 +74,7 @@ namespace Wormhole.Managers
                     Sync.Players.RevivePlayer(player);
                 }
                 else
-                    Log.Warn("Detected character without identity. Clang magic may occur");
+                    Log.Warn($"Detected character without identity. Clang magic may occur\ngrid: {cockpit.CubeGrid.DisplayName} cockpit: {cockpit.CustomName} identity id: {cockpit.Pilot.GetPlayerIdentityId()}");
             }
         }
 
@@ -117,6 +117,9 @@ namespace Wormhole.Managers
 
             foreach (var cubeBlock in file.Grids.SelectMany(static b => b.CubeBlocks))
             {
+                if (cubeBlock is MyObjectBuilder_Cockpit builderCockpit)
+                    RemapCockpit(builderCockpit, identitiesToChange);
+                
                 if (!Plugin.Instance.Config.KeepOwnership && requesterIdentity is { })
                 {
                     cubeBlock.Owner = requesterIdentity.IdentityId;
@@ -129,9 +132,6 @@ namespace Wormhole.Managers
 
                 if (identitiesToChange.TryGetValue(cubeBlock.Owner, out var owner))
                     cubeBlock.Owner = owner;
-                
-                if (cubeBlock is MyObjectBuilder_Cockpit builderCockpit)
-                    RemapCockpit(builderCockpit, identitiesToChange);
             }
         }
 
@@ -156,6 +156,8 @@ namespace Wormhole.Managers
             if (Sync.Players.TryGetIdentity(cockpit.Pilot.OwningPlayerIdentityId!.Value) is { } identity)
                 // to prevent from hungry trash collector
                 identity.LastLogoutTime = DateTime.Now;
+            else
+                Log.Warn($"Failed to remap cockpit {cockpit.CustomName} identity id: {cockpit.Pilot.OwningPlayerIdentityId}");
         }
     }
 }

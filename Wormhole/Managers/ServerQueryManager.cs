@@ -18,20 +18,35 @@ namespace Wormhole.Managers
         {
         }
 
-        public async Task<bool> IsServerFull(string address)
+        public async Task<ServerStatus> GetServerStatus(string address)
         {
             try
             {
                 using var query = new ServerQuery(address);
                 var info = await query.GetServerInfoAsync();
 
-                return info.Players == info.MaxPlayers;
+                return info.Players >= info.MaxPlayers ? ServerStatus.Full : ServerStatus.CanAccept;
+            }
+            catch (TimeoutException)
+            {
+                Log.Warn($"Request to {address} timed out");
+                return ServerStatus.RequestTimeout;
             }
             catch (Exception e)
             {
-                Log.Fatal(e);
-                return false;
+                Log.Error(e, $"Excetion ocoured in server status request to {address}");
+                return ServerStatus.UnknownError;
             }
         }
+    }
+
+    public enum ServerStatus
+    {
+        CanAccept,
+        Full,
+        RequestTimeout,
+        // TODO: maybe later
+        Loading,
+        UnknownError
     }
 }

@@ -76,7 +76,7 @@ namespace Wormhole
         public static string CreateBlueprintPath(string folder, string fileName)
         {
             Directory.CreateDirectory(folder);
-            return Path.Combine(folder, fileName + ".sbc");
+            return Path.Combine(folder, fileName + ".sbcB5");
         }
 
         public static bool HasRightToMove(IMyPlayer player, MyCubeGrid grid)
@@ -296,7 +296,7 @@ namespace Wormhole
             {
                 TransferFileInfo info = new ();
                 var pathItems = path.Split('_');
-                if (pathItems.Length != 4) return null;
+                if (pathItems.Length < 4) return null;
 
                 info.DestinationWormhole = pathItems[0];
                 info.SteamUserId = ulong.Parse(pathItems[1]);
