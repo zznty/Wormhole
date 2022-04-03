@@ -27,10 +27,21 @@ using VRageMath;
 
 namespace Wormhole
 {
-    public class Utilities
+    public static class Utilities
     {
         public static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
+        public static IEnumerable<ulong> GetAllCharactersClientIds(IEnumerable<MyCubeGrid> grids)
+        {
+            foreach (var block in grids.SelectMany(b => b.GetFatBlocks<MyCockpit>()).Where(b => b.Pilot is not null))
+            {
+                if (!block.Pilot.GetPlayerId(out var playerId))
+                    continue;
+                
+                yield return playerId.SteamId;
+            }
+        }
+        
         public static bool UpdateGridsPositionAndStop(ICollection<MyObjectBuilder_CubeGrid> grids, Vector3D newPosition)
         {
             var biggestGrid = grids.OrderByDescending(static b => b.CubeBlocks.Count).First();
@@ -76,7 +87,7 @@ namespace Wormhole
         public static string CreateBlueprintPath(string folder, string fileName)
         {
             Directory.CreateDirectory(folder);
-            return Path.Combine(folder, fileName + ".sbcB5");
+            return Path.Combine(folder, fileName + ".sbc");
         }
 
         public static bool HasRightToMove(IMyPlayer player, MyCubeGrid grid)
@@ -283,50 +294,12 @@ namespace Wormhole
             var z = sphere.Center.Z + sphere.Radius * Math.Cos(phi);
             return new(x, y, z);
         }
-
-        // parsing helper
-        public class TransferFileInfo
-        {
-            public string DestinationWormhole;
-            public string GridName;
-            public string PlayerName;
-            public ulong SteamUserId;
-
-            public static TransferFileInfo ParseFileName(string path)
-            {
-                TransferFileInfo info = new ();
-                var pathItems = path.Split('_');
-                if (pathItems.Length < 4) return null;
-
-                info.DestinationWormhole = pathItems[0];
-                info.SteamUserId = ulong.Parse(pathItems[1]);
-                info.PlayerName = pathItems[2];
-
-                var lastPart = pathItems[3];
-                if (lastPart.EndsWith(".sbcB5")) lastPart = lastPart.Substring(0, lastPart.Length - ".sbcB5".Length);
-                info.GridName = lastPart;
-
-                return info;
-            }
-
-            public string CreateLogString()
-            {
-                return
-                    $"dest: {DestinationWormhole};steamid: {SteamUserId};playername: {PlayerName};gridName: {GridName};";
-            }
-
-            public string CreateFileName()
-            {
-                return
-                    $"{DestinationWormhole}_{SteamUserId}_{LegalCharOnly(PlayerName)}_{LegalCharOnly(GridName)}";
-            }
-        }
     }
     
-    public static class ColorConverterExtensions
-    {
-        public static string ToHexString(this System.Windows.Media.Color c) => $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+    // parsing helper
 
-        public static string ToRgbString(this System.Windows.Media.Color c) => $"RGB({c.R}, {c.G}, {c.B})";
-    }
+}
+namespace System.Runtime.CompilerServices
+{
+    internal class IsExternalInit{}
 }
