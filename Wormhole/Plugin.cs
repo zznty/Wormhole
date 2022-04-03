@@ -19,6 +19,7 @@ using Sandbox.Game.World;
 using Torch;
 using Torch.API;
 using Torch.API.Plugins;
+using Torch.Event;
 using Torch.Mod;
 using Torch.Mod.Messages;
 using Torch.Utils;
@@ -27,6 +28,7 @@ using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
 using Wormhole.Managers;
+using Wormhole.Managers.Events;
 using Wormhole.ViewModels;
 using Wormhole.Views;
 
@@ -34,6 +36,9 @@ namespace Wormhole
 {
     public class Plugin : TorchPluginBase, IWpfPlugin
     {
+        [ReflectedStaticMethod(Type = typeof(EventManager), Name = "AddDispatchShims")]
+        private static readonly Action<Assembly> _registerAction = null!;
+
         public static readonly Logger Log = LogManager.GetLogger("Wormhole");
 
         private Persistent<Config> _config;
@@ -90,6 +95,9 @@ namespace Wormhole
             Torch.Managers.AddManager(new SpawnManager(Torch));
             _transferManager = new(Torch);
             Torch.Managers.AddManager(_transferManager);
+            Torch.Managers.AddManager(new WhitelistManager(Torch));
+
+            _registerAction(typeof(Plugin).Assembly);
         }
 
         #region WorkSources
@@ -243,14 +251,16 @@ namespace Wormhole
 
                     await Torch.InvokeAsync(() =>
                     {
-                        // This is here because it can be thread unsafe, so just call it in game thread
-                        wormholeDrive.CurrentStoredPower = 0;
-                    
-                        if (pickedDestination is GateDestinationViewModel gateDestination)
-                            ProcessGateJump(gateDestination, grid, grids, wormholeDrive, gateViewModel, playerInCharge);
-                        else if (pickedDestination is InternalDestinationViewModel internalDestination)
-                            ProcessInternalGpsJump(internalDestination, grid, grids, wormholeDrive, gateViewModel,
-                                playerInCharge);
+                        switch (pickedDestination)
+                        {
+                            case GateDestinationViewModel gateDestination:
+                                ProcessGateJump(gateDestination, grid, grids, wormholeDrive, gateViewModel, playerInCharge);
+                                break;
+                            case InternalDestinationViewModel internalDestination:
+                                ProcessInternalGpsJump(internalDestination, grid, grids, wormholeDrive, gateViewModel,
+                                    playerInCharge);
+                                break;
+                        }
                     });
                     _clientEffectsManager.NotifyJumpStatusChanged(JumpStatus.Succeeded, gateViewModel, grid);
                 }
@@ -266,7 +276,7 @@ namespace Wormhole
 
         #region Outgoing Processing
 
-        private void ProcessInternalGpsJump(InternalDestinationViewModel dest, MyCubeGrid grid, IReadOnlyCollection<MyCubeGrid> grids,
+        private void ProcessInternalGpsJump(InternalDestinationViewModel dest, MyCubeGrid grid, ICollection<MyCubeGrid> grids,
             MyJumpDrive wormholeDrive, GateViewModel gateViewModel, MyPlayer playerInCharge)
         {
             var pos = dest.TryParsePosition() ??
@@ -282,7 +292,25 @@ namespace Wormhole
 
             if (freePos is null)
                 return;
+            
+            var fileInfo = new TransferFileInfo
+            {
+                DestinationWormhole = null,
+                GridName = grid.DisplayName,
+                PlayerName = playerInCharge.DisplayName,
+                SteamUserId = playerInCharge.Id.SteamId
+            };
+            var info = new InternalGridTransferEvent(fileInfo, dest, grids);
+            GridTransferEventShim.RaiseEvent(ref info);
+            
+            if (info.Cancelled)
+            {
+                Log.Info($"Internal gps transfer was cancelled by event handler; {fileInfo.CreateLogString()}");
+                MyVisualScriptLogicProvider.SendChatMessageColored(info.CancelMessage, Color.Red, "Wormhole", playerInCharge.Identity.IdentityId);
+                return;
+            }
 
+            wormholeDrive.CurrentStoredPower = 0;
             _clientEffectsManager.NotifyJumpStatusChanged(JumpStatus.Perform, gateViewModel, grid, freePos);
 
             MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);
@@ -290,7 +318,7 @@ namespace Wormhole
             MyVisualScriptLogicProvider.CreateLightning(point);
         }
         
-        private void ProcessGateJump(GateDestinationViewModel dest, MyCubeGrid grid, IReadOnlyCollection<MyCubeGrid> grids,
+        private void ProcessGateJump(GateDestinationViewModel dest, MyCubeGrid grid, IList<MyCubeGrid> grids,
             MyJumpDrive wormholeDrive, GateViewModel gateViewModel, MyPlayer playerInCharge)
         {
             var destGate = _discoveryManager.GetGateByName(dest.Name, out var ownerIp);
@@ -306,8 +334,29 @@ namespace Wormhole
                     (float) BoundingSphereD.CreateFromBoundingBox(box).Radius);
 
                 if (freePos is null)
+                {
+                    Log.Warn($"No free pos for grid {grid.DisplayName} owner {playerInCharge.DisplayName} ({playerInCharge.Id.SteamId})");
                     return;
+                }
 
+                var fileInfo = new TransferFileInfo
+                {
+                    DestinationWormhole = dest.Name,
+                    GridName = grid.DisplayName,
+                    PlayerName = playerInCharge.DisplayName,
+                    SteamUserId = playerInCharge.Id.SteamId
+                };
+                var info = new InternalGridTransferEvent(fileInfo, dest, grids);
+                GridTransferEventShim.RaiseEvent(ref info);
+
+                if (info.Cancelled)
+                {
+                    Log.Info($"Internal transfer was cancelled by event handler; {fileInfo.CreateLogString()}");
+                    MyVisualScriptLogicProvider.SendChatMessageColored(info.CancelMessage, Color.Red, "Wormhole", playerInCharge.Identity.IdentityId);
+                    return;
+                }
+
+                wormholeDrive.CurrentStoredPower = 0;
                 _clientEffectsManager.NotifyJumpStatusChanged(JumpStatus.Perform, gateViewModel, grid, freePos);
 
                 MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);
@@ -317,7 +366,7 @@ namespace Wormhole
             else
             {
 
-                var transferFileInfo = new Utilities.TransferFileInfo
+                var transferFileInfo = new TransferFileInfo
                 {
                     DestinationWormhole = dest.Name,
                     SteamUserId = playerInCharge.Id.SteamId,
@@ -325,20 +374,25 @@ namespace Wormhole
                     GridName = grid.DisplayName
                 };
 
-                Log.Info("creating filetransfer:" + transferFileInfo.CreateLogString());
+                Log.Info($"creating filetransfer: {transferFileInfo.CreateLogString()}");
+
+                var info = new OutgoingGridTransferEvent(transferFileInfo, dest, grids);
+                GridTransferEventShim.RaiseEvent(ref info);
+                if (info.Cancelled)
+                {
+                    Log.Info("Outgoing transfer was cancelled by event handler");
+                    MyVisualScriptLogicProvider.SendChatMessageColored(info.CancelMessage, Color.Red, "Wormhole", playerInCharge.Identity.IdentityId);
+                    return;
+                }
+                
                 var filename = transferFileInfo.CreateFileName();
 
+                wormholeDrive.CurrentStoredPower = 0;
                 _clientEffectsManager.NotifyJumpStatusChanged(JumpStatus.Perform, gateViewModel, grid);
 
                 MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);
 
-                var objectBuilders = new List<MyObjectBuilder_CubeGrid>();
-                foreach (var mygrid in grids)
-                {
-                    if (mygrid.GetObjectBuilder() is not MyObjectBuilder_CubeGrid objectBuilder)
-                        throw new ArgumentException(mygrid + " has a ObjectBuilder thats not for a CubeGrid");
-                    objectBuilders.Add(objectBuilder);
-                }
+                var objectBuilders = grids.Select(b => (MyObjectBuilder_CubeGrid)b.GetObjectBuilder()).ToList();
 
                 static IEnumerable<long> GetIds(MyObjectBuilder_CubeBlock block)
                 {
@@ -382,7 +436,9 @@ namespace Wormhole
                                 Sync.Players.TryGetPlayerId(b.Key, out var id);
                                 return (b.Key, id.SteamId);
                             }).Where(static b => b.SteamId > 0)
-                            .ToDictionary(static b => b.Key, static b => b.SteamId)
+                            .ToDictionary(static b => b.Key, static b => b.SteamId),
+                        SourceDestinationId = dest.Id,
+                        SourceGateName = gateViewModel.Name
                     });
 
                 foreach (var identity in sittingPlayerIdentityIds.Select(Sync.Players.TryGetIdentity)
@@ -418,7 +474,7 @@ namespace Wormhole
                 if (!File.Exists(file)) continue;
 
                 Log.Info("Processing recivied grid: " + fileName);
-                var fileTransferInfo = Utilities.TransferFileInfo.ParseFileName(fileName);
+                var fileTransferInfo = TransferFileInfo.ParseFileName(fileName);
                 if (fileTransferInfo is null)
                 {
                     Log.Error("Error parsing file name");

@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using NLog;
 using Sandbox.Engine.Multiplayer;
 using Torch.API;
 using Torch.Managers;
+using Wormhole.Managers.Events;
 using Wormhole.Patches;
+using Wormhole.ViewModels;
 
 namespace Wormhole.Managers
 {
     public class TransferManager : Manager
     {
         private static readonly ILogger Log = LogManager.GetCurrentClassLogger();
-        private readonly ConcurrentDictionary<ulong, (TransferFile, Utilities.TransferFileInfo)> _queue = new();
+        private readonly ConcurrentDictionary<ulong, (TransferFile, TransferFileInfo)> _queue = new();
         
         [Dependency] private readonly SpawnManager _spawnManager = null!;
         [Dependency] private readonly WormholeDiscoveryManager _discoveryManager = null!;
@@ -57,12 +60,23 @@ namespace Wormhole.Managers
             return result && _queue.TryRemove(clientId, out _);
         }
 
-        public void QueueIncomingTransfer(TransferFile file, Utilities.TransferFileInfo fileTransferInfo)
+        public void QueueIncomingTransfer(TransferFile file, TransferFileInfo fileTransferInfo)
         {
+            var dest = (GateDestinationViewModel)_discoveryManager.GetGateByName(file.SourceGateName, out _)
+                .Destinations.First(b => b.Id == file.SourceDestinationId);
+            
+            var info = new IngoingGridTransferEvent(fileTransferInfo, dest, file);
+            GridTransferEventShim.RaiseEvent(ref info);
+            if (info.Cancelled)
+            {
+                Log.Info($"Transfer was cancelled by event handler; {fileTransferInfo.CreateLogString()}");
+                return;
+            }
+            
             _queue[fileTransferInfo.SteamUserId] = (file, fileTransferInfo);
         }
 
-        private bool ProcessTransfer(TransferFile file, Utilities.TransferFileInfo fileInfo)
+        private bool ProcessTransfer(TransferFile file, TransferFileInfo fileInfo)
         {
             var wormhole = _discoveryManager.GetGateByName(fileInfo.DestinationWormhole, out _);
 
@@ -75,8 +89,15 @@ namespace Wormhole.Managers
             
             _spawnManager.RemapOwnership(file, fileInfo.SteamUserId);
             Utilities.UpdateGridsPositionAndStop(file.Grids, freePos);
-            
-            _spawnManager.SpawnGridsParallel(file.Grids);
+
+            var dest = (GateDestinationViewModel)_discoveryManager.GetGateByName(file.SourceGateName, out _)
+                .Destinations.First(b => b.Id == file.SourceDestinationId);
+
+            _spawnManager.SpawnGridsParallel(file.Grids, grids =>
+            {
+                var spawnedInfo = new IngoingGridSpawnedEvent(fileInfo, dest, grids);
+                GridTransferEventShim.RaiseEvent(ref spawnedInfo);
+            });
             return true;
         }
     }
