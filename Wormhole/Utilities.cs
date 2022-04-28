@@ -87,7 +87,7 @@ namespace Wormhole
         public static string CreateBlueprintPath(string folder, string fileName)
         {
             Directory.CreateDirectory(folder);
-            return Path.Combine(folder, fileName + ".sbc");
+            return Path.Combine(folder, fileName + ".sbcB5");
         }
 
         public static bool HasRightToMove(IMyPlayer player, MyCubeGrid grid)
