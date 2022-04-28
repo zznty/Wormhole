@@ -209,7 +209,7 @@ namespace Wormhole
                         !_discoveryManager.IsLocalGate(destination.Name) &&
                         _discoveryManager.GetGateByName(destination.Name, out var address) is { })
                     {
-                        var serverQueryTask = _serverQueryManager.GetServerStatus(address);
+                        var serverQueryTask = Config.CheckIsTargetServerFull ? _serverQueryManager.GetServerStatus(address) : Task.FromResult(ServerStatus.CanAccept);
                         await Task.WhenAll(jumpTask, serverQueryTask);
 
                         void Respond(string msg)
