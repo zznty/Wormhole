@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
@@ -13,6 +14,8 @@ using Sandbox.Game.World;
 using Torch.API.Managers;
 using Torch.Commands;
 using Torch.Commands.Permissions;
+using Torch.Mod;
+using Torch.Mod.Messages;
 using Torch.Utils;
 using VRage;
 using VRage.Game.ModAPI;
@@ -200,6 +203,33 @@ namespace Wormhole
             Utilities.KillCharacters(identity.SavedCharacters);
 
             Sync.Players.KillPlayer((MyPlayer) Context.Player);
+        }
+
+        [Command("show discovery", "show the current discovered gates")]
+        public void ShowDiscovery()
+        {
+            var sb = new StringBuilder();
+
+            if (Context.Player is null)
+                sb.AppendLine("Discovered Gates:");
+                    
+            foreach (var (ip, discovery) in Context.Torch.Managers.GetManager<WormholeDiscoveryManager>().Discoveries)
+            {
+                sb.AppendLine($"= {ip} - {discovery.Gates.Count} gates");
+                foreach (var gate in discovery.Gates)
+                {
+                    sb.AppendLine($"{" ",-3}+ {gate.Name}:");
+                    foreach (var destination in gate.Destinations)
+                    {
+                        sb.AppendLine($"{" ",-6}-> {destination.DisplayName}");
+                    }
+                }
+            }
+            
+            if (Context.Player is null)
+                Context.Respond(sb.ToString());
+            else
+                ModCommunication.SendMessageTo(new DialogMessage("Wormhole", "Discovered Gates", sb.ToString()), Context.Player.SteamUserId);
         }
     }
 }
