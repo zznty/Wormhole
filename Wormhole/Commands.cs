@@ -34,7 +34,7 @@ namespace Wormhole
             foreach (var wormholeGate in Plugin.Config.WormholeGates)
             {
                 var gps = wormholeGate.ToGps();
-                MySession.Static.Gpss.AddPlayerGps(Context.Player.IdentityId, ref gps);
+                MySession.Static.Gpss.SendAddGpsRequest(Context.Player.IdentityId, ref gps);
             }
 
             Context.Respond("GPSs added to your list if it didn't already exist");
