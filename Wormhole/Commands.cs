@@ -34,7 +34,7 @@ namespace Wormhole
             foreach (var wormholeGate in Plugin.Config.WormholeGates)
             {
                 var gps = wormholeGate.ToGps();
-                MySession.Static.Gpss.SendAddGps(Context.Player.IdentityId, ref gps);
+                MySession.Static.Gpss.AddPlayerGps(Context.Player.IdentityId, ref gps);
             }
 
             Context.Respond("GPSs added to your list if it didn't already exist");
@@ -50,7 +50,7 @@ namespace Wormhole
                 foreach (var (_, identityId) in Sync.Players
                     .GetPrivateField<ConcurrentDictionary<MyPlayer.PlayerId, long>>("m_playerIdentityIds"))
                 {
-                    MySession.Static.Gpss.SendAddGps(identityId, ref gps);
+                    MySession.Static.Gpss.AddPlayerGps(identityId, ref gps);
                 }
             }
 
