@@ -30,7 +30,7 @@ namespace Wormhole.ViewModels
             {
                 Name = Name,
                 Description = Description ?? string.Empty,
-                GPSColor = ColorUtils.TranslateColor(HexColor),
+                GPSColor = string.IsNullOrEmpty(HexColor) ? new(5874103) : ColorUtils.TranslateColor(HexColor),
                 Coords = Position,
                 ShowOnHud = true
             };
