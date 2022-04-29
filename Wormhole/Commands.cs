@@ -190,6 +190,7 @@ namespace Wormhole
         }
 
         [Command("clear characters", "try to remove all your character (if it duplicated or bugged)")]
+        [Permission(MyPromoteLevel.None)]
         public void RemoveCharacters()
         {
             if (Context.Player == null)
