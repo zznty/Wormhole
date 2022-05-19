@@ -1,7 +1,9 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
@@ -12,6 +14,8 @@ using Sandbox.Game.World;
 using Torch.API.Managers;
 using Torch.Commands;
 using Torch.Commands.Permissions;
+using Torch.Mod;
+using Torch.Mod.Messages;
 using Torch.Utils;
 using VRage;
 using VRage.Game.ModAPI;
@@ -33,7 +37,7 @@ namespace Wormhole
             foreach (var wormholeGate in Plugin.Config.WormholeGates)
             {
                 var gps = wormholeGate.ToGps();
-                MySession.Static.Gpss.SendAddGps(Context.Player.IdentityId, ref gps);
+                MySession.Static.Gpss.SendAddGpsRequest(Context.Player.IdentityId, ref gps);
             }
 
             Context.Respond("GPSs added to your list if it didn't already exist");
@@ -49,7 +53,7 @@ namespace Wormhole
                 foreach (var (_, identityId) in Sync.Players
                     .GetPrivateField<ConcurrentDictionary<MyPlayer.PlayerId, long>>("m_playerIdentityIds"))
                 {
-                    MySession.Static.Gpss.SendAddGps(identityId, ref gps);
+                    MySession.Static.Gpss.AddPlayerGps(identityId, ref gps);
                 }
             }
 
@@ -108,7 +112,7 @@ namespace Wormhole
                         grid.Close();
                     }
 
-                foreach (var server in Plugin.Config.WormholeGates)
+                foreach (var gateViewModel in Plugin.Config.WormholeGates)
                 {
                     var prefab = type switch
                     {
@@ -120,62 +124,34 @@ namespace Wormhole
                         _ => "WORMHOLE"
                     };
 
-                    var grids = MyPrefabManager.Static.GetGridPrefab(prefab);
-                    var objectBuilderList = new List<MyObjectBuilder_EntityBase>();
+                    var grids = MyPrefabManager.Static.GetGridPrefab(prefab).ToList();
 
-                    foreach (var grid in grids)
+                    foreach (var cubeBlock in grids.SelectMany(static grid => grid.CubeBlocks))
                     {
-                        foreach (var cubeBlock in grid.CubeBlocks)
-                            if (selfowned)
-                            {
-                                cubeBlock.Owner = Context.Player.IdentityId;
-                                cubeBlock.BuiltBy = Context.Player.IdentityId;
-                            }
-                            else
-                            {
-                                cubeBlock.Owner = ownerid;
-                                cubeBlock.BuiltBy = ownerid;
-                            }
-
-                        objectBuilderList.Add(grid);
-                    }
-
-                    var firstGrid = true;
-                    double deltaX = 0;
-                    double deltaY = 0;
-                    double deltaZ = 0;
-
-                    foreach (var grid in grids)
-                    {
-                        var position = grid.PositionAndOrientation;
-                        var realPosition = position.Value;
-                        var currentPosition = realPosition.Position;
-
-                        if (firstGrid)
+                        if (selfowned)
                         {
-                            deltaX = server.X - currentPosition.X;
-                            deltaY = server.Y - currentPosition.Y;
-                            deltaZ = server.Z - currentPosition.Z;
-
-                            currentPosition.X = server.X;
-                            currentPosition.Y = server.Y;
-                            currentPosition.Z = server.Z;
-
-                            firstGrid = false;
+                            cubeBlock.Owner = Context.Player.IdentityId;
+                            cubeBlock.BuiltBy = Context.Player.IdentityId;
                         }
                         else
                         {
-                            currentPosition.X += deltaX;
-                            currentPosition.Y += deltaY;
-                            currentPosition.Z += deltaZ;
+                            cubeBlock.Owner = ownerid;
+                            cubeBlock.BuiltBy = ownerid;
                         }
-
-                        realPosition.Position = currentPosition;
-                        grid.PositionAndOrientation = realPosition;
                     }
-
-                    MyEntities.RemapObjectBuilderCollection(objectBuilderList);
-                    MyEntities.Load(objectBuilderList, out _);
+                    
+                    MyEntities.RemapObjectBuilderCollection(grids);
+                    Utilities.UpdateGridsPositionAndStop(grids, gateViewModel.Position);
+                    
+                    foreach (var grid in grids)
+                    {
+                        grid.IsStatic = !prefab.Contains("rotating", StringComparison.OrdinalIgnoreCase);
+                        grid.Immune = true;
+                        grid.Editable = false;
+                        
+                        // Queue work for creation thread, so no lags on main
+                        MyEntities.CreateAsync(grid, true);
+                    }
                 }
 
                 Context.Respond(
@@ -217,6 +193,7 @@ namespace Wormhole
         }
 
         [Command("clear characters", "try to remove all your character (if it duplicated or bugged)")]
+        [Permission(MyPromoteLevel.None)]
         public void RemoveCharacters()
         {
             if (Context.Player == null)
@@ -226,6 +203,33 @@ namespace Wormhole
             Utilities.KillCharacters(identity.SavedCharacters);
 
             Sync.Players.KillPlayer((MyPlayer) Context.Player);
+        }
+
+        [Command("show discovery", "show the current discovered gates")]
+        public void ShowDiscovery()
+        {
+            var sb = new StringBuilder();
+
+            if (Context.Player is null)
+                sb.AppendLine("Discovered Gates:");
+                    
+            foreach (var (ip, discovery) in Context.Torch.Managers.GetManager<WormholeDiscoveryManager>().Discoveries)
+            {
+                sb.AppendLine($"= {ip} - {discovery.Gates.Count} gates");
+                foreach (var gate in discovery.Gates)
+                {
+                    sb.AppendLine($"{" ",-3}+ {gate.Name}:");
+                    foreach (var destination in gate.Destinations)
+                    {
+                        sb.AppendLine($"{" ",-6}-> {destination.DisplayName}");
+                    }
+                }
+            }
+            
+            if (Context.Player is null)
+                Context.Respond(sb.ToString());
+            else
+                ModCommunication.SendMessageTo(new DialogMessage("Wormhole", "Discovered Gates", sb.ToString()), Context.Player.SteamUserId);
         }
     }
 }

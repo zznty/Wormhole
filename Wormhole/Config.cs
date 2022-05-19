@@ -52,5 +52,8 @@ namespace Wormhole
             Description =
                 "Keep ownership & builtBy on blocks. If false, all blocks will be transferred to player that requested jump")]
         public bool KeepOwnership { get; set; }
+
+        [Display(Name = "Check Is Target Server Full", Description = "Check if target server is full on jump")]
+        public bool CheckIsTargetServerFull { get; set; } = true;
     }
 }
