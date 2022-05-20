@@ -9,21 +9,15 @@ using System.Windows.Controls;
 using NLog;
 using ProtoBuf;
 using Sandbox.Common.ObjectBuilders;
-using Sandbox.Engine.Multiplayer;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
-using Sandbox.Game.Entities.Blocks;
-using Sandbox.Game.Entities.Character;
 using Sandbox.Game.Multiplayer;
 using Sandbox.Game.World;
 using Torch;
 using Torch.API;
 using Torch.API.Plugins;
 using Torch.Event;
-using Torch.Mod;
-using Torch.Mod.Messages;
 using Torch.Utils;
-using VRage;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
@@ -298,9 +292,9 @@ namespace Wormhole
             wormholeDrive.CurrentStoredPower = 0;
             _clientEffectsManager.NotifyJumpStatusChanged(JumpStatus.Perform, gateViewModel, grid, freePos);
 
-            MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);
+            //MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);
             Utilities.UpdateGridPositionAndStopLive(wormholeDrive.CubeGrid, freePos.Value);
-            MyVisualScriptLogicProvider.CreateLightning(point);
+            //MyVisualScriptLogicProvider.CreateLightning(pos);
         }
 
         private void ProcessGateJump(GateDestinationViewModel dest, MyCubeGrid grid, IList<MyCubeGrid> grids,
@@ -344,9 +338,9 @@ namespace Wormhole
                 wormholeDrive.CurrentStoredPower = 0;
                 _clientEffectsManager.NotifyJumpStatusChanged(JumpStatus.Perform, gateViewModel, grid, freePos);
 
-                MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);
+                //MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);
                 Utilities.UpdateGridPositionAndStopLive(wormholeDrive.CubeGrid, freePos.Value);
-                MyVisualScriptLogicProvider.CreateLightning(toGatePoint);
+                //MyVisualScriptLogicProvider.CreateLightning(toGatePoint);
             }
             else
             {
@@ -374,7 +368,7 @@ namespace Wormhole
                 wormholeDrive.CurrentStoredPower = 0;
                 _clientEffectsManager.NotifyJumpStatusChanged(JumpStatus.Perform, gateViewModel, grid);
 
-                MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);
+                //MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);
 
                 var objectBuilders = grids.Select(b => (MyObjectBuilder_CubeGrid)b.GetObjectBuilder()).ToList();
 
@@ -396,8 +390,18 @@ namespace Wormhole
                 foreach (var cubeBlock in objectBuilders.SelectMany(static cubeGrid => cubeGrid.CubeBlocks))
                 {
                     if (!Config.ExportProjectorBlueprints)
+                    {
                         if (cubeBlock is MyObjectBuilder_ProjectorBase projector)
+                        {
                             projector.ProjectedGrids = null;
+                            projector.Enabled = false;
+                        }
+                    }
+                    else
+                    {
+                        if (cubeBlock is MyObjectBuilder_ProjectorBase projector)
+                            projector.Enabled = false;
+                    }
 
                     if (cubeBlock is not MyObjectBuilder_Cockpit cockpit) continue;
                     if (cockpit.Pilot?.OwningPlayerIdentityId == null) continue;
@@ -470,6 +474,8 @@ namespace Wormhole
                 TransferFile transferFile;
                 try
                 {
+                    // prevent IO read crash on locked file by other plugin.
+                    Thread.Sleep(100);
                     using var stream = File.OpenRead(file);
                     using var decompressStream = new GZipStream(stream, CompressionMode.Decompress);
 
@@ -506,7 +512,9 @@ namespace Wormhole
             }
 
             // Saves game on enter if enabled in config.
-            if (!changes || !Config.SaveOnEnter) return;
+            if (!Config.SaveOnEnter) return;
+
+            if (!changes) return;
 
             if (_saveOnEnterTask is null || _saveOnEnterTask.IsCompleted)
                 _saveOnEnterTask = Torch.Save();

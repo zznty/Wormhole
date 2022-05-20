@@ -145,7 +145,7 @@ namespace Wormhole.Managers
             }
 
             cockpit.Pilot.OwningPlayerIdentityId = identitiesToChange[cockpit.Pilot.OwningPlayerIdentityId!.Value];
-            var component = cockpit.ComponentContainer.Components.FirstOrDefault(static b =>
+            var component = cockpit.ComponentContainer?.Components?.FirstOrDefault(static b =>
                 b.Component is MyObjectBuilder_HierarchyComponentBase);
 
             if (component?.Component is MyObjectBuilder_HierarchyComponentBase hierarchyComponent)
