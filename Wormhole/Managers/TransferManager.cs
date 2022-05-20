@@ -89,7 +89,9 @@ namespace Wormhole.Managers
                 MyMultiplayer.Static.DisconnectClient(fileInfo.SteamUserId);
                 return false;
             }
-            
+
+            MyEntities.RemapObjectBuilderCollection(file.Grids);
+
             _spawnManager.RemapOwnership(file, fileInfo.SteamUserId);
             Utilities.UpdateGridsPositionAndStop(file.Grids, freePos);
 

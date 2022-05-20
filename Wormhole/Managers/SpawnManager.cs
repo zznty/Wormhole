@@ -42,10 +42,15 @@ namespace Wormhole.Managers
             return grids.Select(gridBuilder =>
             {
                 Log.Debug($"Spawning grid {gridBuilder.DisplayName}");
-                MyEntities.RemapObjectBuilder(gridBuilder);
-                var grid = (MyCubeGrid)MyEntities.CreateFromObjectBuilderNoinit(gridBuilder);
-                MyEntities.InitAsync(grid, gridBuilder, true, DoneHandler);
-                return grid;
+                //MyEntities.RemapObjectBuilder(gridBuilder);  // subgrids fail
+
+                var entity = MyEntities.CreateFromObjectBuilderNoinit(gridBuilder);
+                MyEntities.InitEntity(gridBuilder, ref entity);
+                MyEntities.Add(entity, true);
+                DoneHandler(entity);
+
+                //MyEntities.InitAsync(entity, gridBuilder, true, DoneHandler); // subgrids fail
+                return (MyCubeGrid)entity;
             }).ToArray();
         }
 
