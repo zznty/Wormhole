@@ -51,8 +51,7 @@ namespace Wormhole.Managers
         {
             return Plugin.Instance.Config.WorkWithAllJd || JdDefinitions.Contains(drive.BlockDefinition.Id);
         }
-        
-        // ReSharper disable once SuggestBaseTypeForParameter
+
         public DestinationViewModel TryGetDestination(MyTerminalBlock block, GateViewModel gate)
         {
             return TryGetDestinationFromStorage(block.Storage, out var destinationId)
@@ -63,13 +62,12 @@ namespace Wormhole.Managers
         private static bool TryGetDestinationFromStorage(MyModStorageComponentBase component, out string destination)
         {
             destination = null;
-            
-            if (!(component?.TryGetValue(ComponentGuid, out destination) ?? false)) 
+
+            if (!(component?.TryGetValue(ComponentGuid, out destination) ?? false))
                 return false;
-            
+
             component.Remove(ComponentGuid);
             return true;
-
         }
     }
 }

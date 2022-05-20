@@ -71,18 +71,16 @@
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Column="0" Grid.Row="8" VerticalAlignment="Center" Text="Wormhole Radius"
                                        Margin="5,6" Height="16" />
-                            <TextBox Name="RadiusGate" Grid.Column="1" Grid.Row="8" Margin="5"
+                            <TextBox Name="RadiusGate" Grid.Column="1" Grid.Row="8" Margin="5,5,123,5"
                                      Text="{Binding GateRadius}" />
                             <TextBlock Grid.Column="0" Grid.Row="11" VerticalAlignment="Center"
-                                       Text="Auto Send if Single Send To (Disables Drives on Jump)" Margin="5,6"
+                                       Text="Auto Send if Single Send To (Disables Drives on Jump)" Margin="5,2,5,10"
                                        Height="16" />
                             <CheckBox Name="AutoSend" Grid.Column="1" Grid.Row="11" Margin="5"
                                       IsChecked="{Binding AutoSend}" />
-                            <StackPanel Grid.Row="0" Grid.Column="2" Grid.RowSpan="8">
-                                <!-- Extra Space to use later -->
-                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="2" Grid.RowSpan="8"></StackPanel>
                         </Grid>
-                        <Grid Margin="0,0,0,0" Width="{Binding ElementName=wideboi, Path=ActualWidth}"
+                        <Grid Margin="0,0,0,0" Width="797"
                               HorizontalAlignment="Left">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="2*" />
@@ -98,14 +96,14 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <Button Grid.Column="4" Grid.Row="0" Content="Add"
-                                    HorizontalAlignment="Stretch" Margin="5" Click="Add_OnClick" />
-                            <Button Grid.Column="5" Grid.Row="0" Content="Remove"
-                                    HorizontalAlignment="Stretch" Margin="5" Click="Del_OnClick" />
-                            <Button Grid.Column="6" Grid.Row="0" Content="Edit"
-                                    HorizontalAlignment="Stretch" Margin="5" Click="Edit_OnClick" />
-                            <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Center" Text="Name"
-                                       FontWeight="Bold" Margin="5" />
+                            <Button Grid.Row="0" Content="Add"
+                                    HorizontalAlignment="Stretch" Margin="10,0,79,10" Click="Add_OnClick" />
+                            <Button Grid.Row="0" Content="Remove"
+                                    HorizontalAlignment="Stretch" Margin="89,0,0,10" Click="Del_OnClick" />
+                            <Button Grid.Row="0" Content="Edit"
+                                    HorizontalAlignment="Stretch" Margin="10,0,79,10" Click="Edit_OnClick" Grid.Column="1" />
+                            <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Center" Text="Gate Name"
+                                       FontWeight="Bold" Margin="48,5,42,5" Width="69" />
                             <TextBlock Grid.Column="1" Grid.Row="1" HorizontalAlignment="Center" Text="Description"
                                        FontWeight="Bold" Margin="5" />
                             <TextBlock Grid.Column="2" Grid.Row="1" HorizontalAlignment="Center" Text="Color"
@@ -118,7 +116,7 @@
                                        FontWeight="Bold" Margin="5" />
                             <TextBlock Grid.Column="6" Grid.Row="1" HorizontalAlignment="Center" Text="Z"
                                        FontWeight="Bold" Margin="5" />
-                            <TextBox x:Name="Nameinput" Grid.Column="0" Grid.Row="2" Margin="5" Height="30"
+                            <TextBox x:Name="Nameinput" Grid.Column="0" Grid.Row="2" Margin="0,5,10,10"
                                      TextWrapping="Wrap" />
                             <TextBox x:Name="Descriptioninput" Grid.Column="1" Grid.Row="2" Margin="5" Height="30"
                                      TextWrapping="Wrap" />
@@ -127,9 +125,9 @@
                                     Content="Edit" Click="DestinationsButton_OnClick" IsEnabled="False"/>
                             <TextBox x:Name="Xinput" Grid.Column="4" Grid.Row="2" Margin="5" Height="30"
                                      TextWrapping="Wrap" />
-                            <TextBox x:Name="Yinput" Grid.Column="5" Grid.Row="2" Margin="5" Height="30"
+                            <TextBox x:Name="Yinput" Grid.Column="5" Grid.Row="2" Margin="5,5,5,10"
                                      TextWrapping="Wrap" />
-                            <TextBox x:Name="Zinput" Grid.Column="6" Grid.Row="2" Margin="5" Height="30"
+                            <TextBox x:Name="Zinput" Grid.Column="6" Grid.Row="2" Margin="5,5,5,10"
                                      TextWrapping="Wrap" />
                         </Grid>
                         <ListView x:Name="ListServers" ItemsSource="{Binding Path=WormholeGates}">
@@ -188,23 +186,6 @@
                         </ListView>
                     </StackPanel>
                 </TabItem>
-                <!--
-                <TabItem Header="Player Gates" Visibility="Visible">
-                    <StackPanel MinWidth="500" Width="1000" MaxWidth="1000">
-                        <TextBlock>ohhhh what is coming here i wonder...</TextBlock>
-                    </StackPanel>
-                </TabItem>
-                <TabItem Header="Teleporting" Visibility="Visible">
-                    <StackPanel MinWidth="500" Width="1000" MaxWidth="1000">
-                        <TextBlock>ohhhh what is coming here i wonder...</TextBlock>
-                    </StackPanel>
-                </TabItem>
-                <TabItem Header="Data Syncing" Visibility="Visible">
-                    <StackPanel MinWidth="500" Width="1000" MaxWidth="1000">
-                        <TextBlock>ohhhh what is coming here i wonder...</TextBlock>
-                    </StackPanel>
-                </TabItem>
-                -->
             </TabControl>
         </Grid>
         <Grid Visibility="Hidden">

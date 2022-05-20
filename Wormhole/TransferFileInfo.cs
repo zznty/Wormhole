@@ -18,7 +18,9 @@ public class TransferFileInfo
         info.PlayerName = pathItems[2];
 
         var lastPart = pathItems[3];
-        if (lastPart.EndsWith(".sbcB5")) lastPart = lastPart.Substring(0, lastPart.Length - ".sbcB5".Length);
+        if (lastPart.EndsWith(".sbcB5"))
+			lastPart = lastPart.Substring(0, lastPart.Length - ".sbcB5".Length);
+
         info.GridName = lastPart;
 
         return info;

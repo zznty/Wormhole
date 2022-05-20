@@ -15,14 +15,14 @@ namespace Wormhole.Managers
     {
         private static readonly ILogger Log = LogManager.GetCurrentClassLogger();
         private readonly ConcurrentDictionary<ulong, (TransferFile, TransferFileInfo)> _queue = new();
-        
+
         [Dependency] private readonly SpawnManager _spawnManager = null!;
         [Dependency] private readonly WormholeDiscoveryManager _discoveryManager = null!;
-        
+
         public TransferManager(ITorchBase torchInstance) : base(torchInstance)
         {
         }
-        
+
         public override void Attach()
         {
             base.Attach();
@@ -41,7 +41,7 @@ namespace Wormhole.Managers
                 return false;
 
             var (file, fileInfo) = value;
-            
+
             Log.Info($"Queued grid is being spawned {fileInfo.CreateLogString()}");
 
             bool result;
@@ -56,7 +56,7 @@ namespace Wormhole.Managers
                 MyMultiplayer.Static.DisconnectClient(clientId);
                 return false;
             }
-            
+
             return result && _queue.TryRemove(clientId, out _);
         }
 
@@ -64,7 +64,7 @@ namespace Wormhole.Managers
         {
             var dest = (GateDestinationViewModel)_discoveryManager.GetGateByName(file.SourceGateName, out _)
                 .Destinations.First(b => b.Id == file.SourceDestinationId);
-            
+
             var info = new IngoingGridTransferEvent(fileTransferInfo, dest, file);
             GridTransferEventShim.RaiseEvent(ref info);
             if (info.Cancelled)
@@ -72,7 +72,7 @@ namespace Wormhole.Managers
                 Log.Info($"Transfer was cancelled by event handler; {fileTransferInfo.CreateLogString()}");
                 return;
             }
-            
+
             _queue[fileTransferInfo.SteamUserId] = (file, fileTransferInfo);
         }
 

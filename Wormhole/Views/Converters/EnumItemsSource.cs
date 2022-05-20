@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using System.Windows.Data;
 using System.Windows.Markup;
 
@@ -20,10 +18,12 @@ namespace Wormhole.Views.Converters
                 .Select(e => new ValueDescription { Value = e, Description = e.Description()})
                 .ToList();
         }
+
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             return null;
         }
+
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
             return this;

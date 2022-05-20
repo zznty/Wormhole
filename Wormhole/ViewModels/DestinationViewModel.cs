@@ -16,13 +16,13 @@ namespace Wormhole.ViewModels
 
         [Display(Name = "Id", Description = "Must be unique for all destinations in current gate (you can just put random string)")]
         public string Id { get; set; }
-        
+
         [Display(Name = "Add To Destination Whitelist", Description = "If whitelist is enabled on destination server, going through this destination will add containing players to whitelist")]
         public bool AddToDestinationWhitelist { get; set; }
-        
+
         [Display(Name = "Remove From Source Whitelist", Description = "If whitelist is enabled on source server, going through this destination will remove containing players from whitelist")]
         public bool RemoveFromSourceWhitelist { get; set; }
-        
+
         public static DestinationViewModel Create(DestinationType type)
         {
             return type switch
@@ -48,6 +48,7 @@ namespace Wormhole.ViewModels
         {
             if (Utilities.TryParseGps(Gps, out _, out var pos, out _))
                 return pos;
+
             return null;
         }
     }

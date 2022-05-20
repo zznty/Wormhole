@@ -16,15 +16,13 @@ using VRage;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ObjectBuilders.Components;
-using VRage.Network;
-using Wormhole.Patches;
 
 namespace Wormhole.Managers
 {
     public class SpawnManager : Manager
     {
         private static readonly ILogger Log = LogManager.GetCurrentClassLogger();
-        
+
         public SpawnManager(ITorchBase torchInstance) : base(torchInstance)
         {
         }
@@ -53,19 +51,19 @@ namespace Wormhole.Managers
 
         private static void DoneHandler(MyEntity obj)
         {
-            var grid = (MyCubeGrid) obj;
+            var grid = (MyCubeGrid)obj;
 
             if (grid is null)
                 return;
-            
+
             foreach (var cockpit in grid.GetFatBlocks<MyCockpit>().Where(b => b.Pilot is { }))
             {
                 if (cockpit.Pilot.GetIdentity() is { } identity && Sync.Players.TryGetPlayerId(identity.IdentityId, out var playerId))
                 {
                     identity.ChangeCharacter(cockpit.Pilot);
-                    if (Sync.Players.GetPlayerById(playerId) is not { } player) 
+                    if (Sync.Players.GetPlayerById(playerId) is not { } player)
                         continue;
-                    
+
                     MyMultiplayer.RaiseStaticEvent(_ => MySession.SetSpectatorPositionFromServer,
                         cockpit.PositionComp.GetPosition(), new(playerId.SteamId));
                     MySession.SendVicinityInformation(cockpit.CubeGrid.EntityId, new(playerId.SteamId));
@@ -82,7 +80,7 @@ namespace Wormhole.Managers
         {
             var identitiesToChange = new Dictionary<long, long>();
             foreach (var (identityId, clientId) in file.PlayerIdsMap.Where(static b =>
-                Sync.Players.TryGetPlayerIdentity(new (b.Value)) is null))
+                Sync.Players.TryGetPlayerIdentity(new(b.Value)) is null))
             {
                 var ob = file.IdentitiesMap[identityId];
                 ob.IdentityId = MyEntityIdentifier.AllocateId(MyEntityIdentifier.ID_OBJECT_TYPE.IDENTITY);
@@ -100,7 +98,7 @@ namespace Wormhole.Managers
 
             foreach (var (oldIdentityId, clientId) in file.PlayerIdsMap)
             {
-                var identity = Sync.Players.TryGetPlayerIdentity(new (clientId));
+                var identity = Sync.Players.TryGetPlayerIdentity(new(clientId));
 
                 if (identity is { })
                     identitiesToChange[oldIdentityId] = identity.IdentityId;
@@ -113,13 +111,13 @@ namespace Wormhole.Managers
 
             MyIdentity requesterIdentity = null!;
             if (!Plugin.Instance.Config.KeepOwnership)
-                requesterIdentity = Sync.Players.TryGetPlayerIdentity(new (requester));
+                requesterIdentity = Sync.Players.TryGetPlayerIdentity(new(requester));
 
             foreach (var cubeBlock in file.Grids.SelectMany(static b => b.CubeBlocks))
             {
                 if (cubeBlock is MyObjectBuilder_Cockpit builderCockpit)
                     RemapCockpit(builderCockpit, identitiesToChange);
-                
+
                 if (!Plugin.Instance.Config.KeepOwnership && requesterIdentity is { })
                 {
                     cubeBlock.Owner = requesterIdentity.IdentityId;
@@ -150,9 +148,9 @@ namespace Wormhole.Managers
             var component = cockpit.ComponentContainer.Components.FirstOrDefault(static b =>
                 b.Component is MyObjectBuilder_HierarchyComponentBase);
 
-            if (component?.Component is MyObjectBuilder_HierarchyComponentBase hierarchyComponent) 
+            if (component?.Component is MyObjectBuilder_HierarchyComponentBase hierarchyComponent)
                 hierarchyComponent.Children[0] = cockpit.Pilot;
-            
+
             if (Sync.Players.TryGetIdentity(cockpit.Pilot.OwningPlayerIdentityId!.Value) is { } identity)
                 // to prevent from hungry trash collector
                 identity.LastLogoutTime = DateTime.Now;

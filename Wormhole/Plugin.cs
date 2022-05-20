@@ -44,27 +44,15 @@ namespace Wormhole
         private Persistent<Config> _config;
 
         private Gui _control;
-
-        // public const string AdminGatesConfig = "admingatesconfig";
-
-        // private const string AdminGatesConfirmReceivedFolder = "admingatesconfirmreceived";
-        // private const string AdminGatesConfirmSentFolder = "admingatesconfirmsent";
         private const string AdminGatesBackupFolder = "grids_backup";
-
         public const string AdminGatesFolder = "admingates";
         private Task _saveOnEnterTask;
 
         // The actual task of saving the game on exit or enter
         private Task _saveOnExitTask;
-
         private int _tick;
-
         private string _gridDir;
-
-        // private string _gridDirSent;
-        // private string _gridDirReceived;
         private string _gridDirBackup;
-        
         private ClientEffectsManager _clientEffectsManager;
         private JumpManager _jumpManager;
         private DestinationManager _destinationManager;
@@ -74,7 +62,7 @@ namespace Wormhole
         public static Plugin Instance { get; private set; }
         public Config Config => _config?.Data;
 
-        public UserControl GetControl() => _control ??= new (this);
+        public UserControl GetControl() => _control ??= new(this);
 
         public override void Init(ITorchBase torch)
         {
@@ -82,15 +70,15 @@ namespace Wormhole
             Instance = this;
             SetupConfig();
 
-            _clientEffectsManager = new (Torch);
+            _clientEffectsManager = new(Torch);
             Torch.Managers.AddManager(_clientEffectsManager);
-            _jumpManager = new (Torch);
+            _jumpManager = new(Torch);
             Torch.Managers.AddManager(_jumpManager);
-            _destinationManager = new (Torch);
+            _destinationManager = new(Torch);
             Torch.Managers.AddManager(_destinationManager);
-            _discoveryManager = new (Torch);
+            _discoveryManager = new(Torch);
             Torch.Managers.AddManager(_discoveryManager);
-            _serverQueryManager = new (Torch);
+            _serverQueryManager = new(Torch);
             Torch.Managers.AddManager(_serverQueryManager);
             Torch.Managers.AddManager(new SpawnManager(Torch));
             _transferManager = new(Torch);
@@ -150,12 +138,11 @@ namespace Wormhole
 
         #region Outgoing Transferring
 
-        private readonly List<MyEntity> _tmpEntities = new ();
+        private readonly List<MyEntity> _tmpEntities = new();
         private TransferManager _transferManager;
 
         public void WormholeTransferOut(GateViewModel gateViewModel, BoundingSphereD gate)
         {
-            // MyEntities.GetTopMostEntitiesInSphere(ref gate).OfType<MyCubeGrid>() 
             MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref gate, _tmpEntities, MyEntityQueryType.Dynamic);
             foreach (var grid in _tmpEntities.OfType<MyCubeGrid>())
             {
@@ -185,17 +172,15 @@ namespace Wormhole
                 return;
 
             var playerInCharge = Sync.Players.GetControllingPlayer(grid);
-
             if (playerInCharge?.Identity is null ||
                 !wormholeDrive.CanJumpAndHasAccess(playerInCharge.Identity.IdentityId) ||
                 !Utilities.HasRightToMove(playerInCharge, grid))
                 return;
-            
+
             foreach (var disablingWormholeDrive in wormholeDrives)
                 disablingWormholeDrive.Enabled = false;
 
             var grids = Utilities.FindGridList(grid, Config.IncludeConnectedGrids);
-
             if (grids.Count == 0)
                 return;
 
@@ -209,7 +194,7 @@ namespace Wormhole
                         !_discoveryManager.IsLocalGate(destination.Name) &&
                         _discoveryManager.GetGateByName(destination.Name, out var address) is { })
                     {
-                        var serverQueryTask = Config.CheckIsTargetServerFull ? _serverQueryManager.GetServerStatus(address) : Task.FromResult(ServerStatus.CanAccept);
+                        var serverQueryTask = Config.CheckIfTargetServerFull ? _serverQueryManager.GetServerStatus(address) : Task.FromResult(ServerStatus.CanAccept);
                         await Task.WhenAll(jumpTask, serverQueryTask);
 
                         void Respond(string msg)
@@ -219,8 +204,8 @@ namespace Wormhole
 
                             MyVisualScriptLogicProvider.ShowNotification(msg, 15000,
                                 MyFontEnum.Red, playerInCharge.Identity.IdentityId);
-                        } 
-                        
+                        }
+
                         switch (serverQueryTask.Result)
                         {
                             case ServerStatus.CanAccept:
@@ -292,7 +277,7 @@ namespace Wormhole
 
             if (freePos is null)
                 return;
-            
+
             var fileInfo = new TransferFileInfo
             {
                 DestinationWormhole = null,
@@ -302,7 +287,7 @@ namespace Wormhole
             };
             var info = new InternalGridTransferEvent(fileInfo, dest, grids);
             GridTransferEventShim.RaiseEvent(ref info);
-            
+
             if (info.Cancelled)
             {
                 Log.Info($"Internal gps transfer was cancelled by event handler; {fileInfo.CreateLogString()}");
@@ -317,12 +302,12 @@ namespace Wormhole
             Utilities.UpdateGridPositionAndStopLive(wormholeDrive.CubeGrid, freePos.Value);
             MyVisualScriptLogicProvider.CreateLightning(point);
         }
-        
+
         private void ProcessGateJump(GateDestinationViewModel dest, MyCubeGrid grid, IList<MyCubeGrid> grids,
             MyJumpDrive wormholeDrive, GateViewModel gateViewModel, MyPlayer playerInCharge)
         {
             var destGate = _discoveryManager.GetGateByName(dest.Name, out var ownerIp);
-                    
+
             if (_discoveryManager.IsLocalGate(dest.Name))
             {
                 var box = grids.Select(static b => b.PositionComp.WorldAABB)
@@ -365,7 +350,6 @@ namespace Wormhole
             }
             else
             {
-
                 var transferFileInfo = new TransferFileInfo
                 {
                     DestinationWormhole = dest.Name,
@@ -384,7 +368,7 @@ namespace Wormhole
                     MyVisualScriptLogicProvider.SendChatMessageColored(info.CancelMessage, Color.Red, "Wormhole", playerInCharge.Identity.IdentityId);
                     return;
                 }
-                
+
                 var filename = transferFileInfo.CreateFileName();
 
                 wormholeDrive.CurrentStoredPower = 0;
@@ -400,7 +384,7 @@ namespace Wormhole
                         yield return block.Owner;
                     if (block.BuiltBy > 0)
                         yield return block.BuiltBy;
-                    if (block is MyObjectBuilder_Cockpit {Pilot: { }} cockpit)
+                    if (block is MyObjectBuilder_Cockpit { Pilot: { } } cockpit)
                         yield return cockpit.Pilot.OwningPlayerIdentityId!.Value;
                 }
 
@@ -443,6 +427,7 @@ namespace Wormhole
 
                 foreach (var identity in sittingPlayerIdentityIds.Select(Sync.Players.TryGetIdentity)
                     .Where(b => b.Character is { })) Utilities.KillCharacter(identity.Character);
+
                 foreach (var cubeGrid in grids)
                 {
                     cubeGrid.Close();
@@ -450,6 +435,7 @@ namespace Wormhole
 
                 // Saves the game if enabled in config.
                 if (!Config.SaveOnExit) return;
+
                 // (re)Starts the task if it has never been started o´r is done
                 if (_saveOnExitTask is null || _saveOnExitTask.IsCompleted)
                     _saveOnExitTask = Torch.Save();
@@ -466,9 +452,9 @@ namespace Wormhole
 
             var changes = false;
 
+            // if file not null if file exists if file is done being sent and if file hasnt been received before
             foreach (var file in Directory.EnumerateFiles(_gridDir, "*.sbcB5")
                     .Where(s => Path.GetFileNameWithoutExtension(s).Split('_')[0] == wormholeName))
-                //if file not null if file exists if file is done being sent and if file hasnt been received before
             {
                 var fileName = Path.GetFileName(file);
                 if (!File.Exists(file)) continue;
@@ -497,7 +483,7 @@ namespace Wormhole
                     continue;
                 }
 
-                if (Sync.Players.TryGetPlayerIdentity(new (fileTransferInfo.SteamUserId))?.Character is { } character)
+                if (Sync.Players.TryGetPlayerIdentity(new(fileTransferInfo.SteamUserId))?.Character is { } character)
                     Utilities.KillCharacter(character);
 
                 _transferManager.QueueIncomingTransfer(transferFile, fileTransferInfo);
@@ -513,7 +499,7 @@ namespace Wormhole
                         backupFileName = $"{transferString}_{++i}.sbcB5";
                     } while (File.Exists(Path.Combine(_gridDirBackup, backupFileName)));
                 }
-                
+
                 File.Copy(Path.Combine(_gridDir, fileName), Path.Combine(_gridDirBackup, backupFileName));
 
                 File.Delete(Path.Combine(_gridDir, fileName));
@@ -531,15 +517,11 @@ namespace Wormhole
         private void EnsureDirectoriesCreated()
         {
             _gridDir ??= Path.Combine(Config.Folder, AdminGatesFolder);
-            // _gridDirSent ??= Path.Combine(Config.Folder, AdminGatesConfirmSentFolder);
-            // _gridDirReceived ??= Path.Combine(Config.Folder, AdminGatesConfirmReceivedFolder);
             _gridDirBackup ??= Path.Combine(Config.Folder, AdminGatesBackupFolder);
+
             if (!Directory.Exists(_gridDir))
                 Directory.CreateDirectory(_gridDir);
-            // if (!Directory.Exists(_gridDirSent))
-            //     Directory.CreateDirectory(_gridDirSent);
-            // if (!Directory.Exists(_gridDirReceived))
-            //     Directory.CreateDirectory(_gridDirReceived);
+
             if (!Directory.Exists(_gridDirBackup))
                 Directory.CreateDirectory(_gridDirBackup);
         }

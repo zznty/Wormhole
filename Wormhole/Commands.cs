@@ -28,7 +28,7 @@ namespace Wormhole
     [Category("wormhole")]
     public class Commands : CommandModule
     {
-        public Plugin Plugin => (Plugin) Context.Plugin;
+        public Plugin Plugin => (Plugin)Context.Plugin;
 
         [Command("show", "shows wormholes")]
         [Permission(MyPromoteLevel.None)]
@@ -39,7 +39,6 @@ namespace Wormhole
                 var gps = wormholeGate.ToGps();
                 MySession.Static.Gpss.SendAddGpsRequest(Context.Player.IdentityId, ref gps);
             }
-
             Context.Respond("GPSs added to your list if it didn't already exist");
         }
 
@@ -56,7 +55,6 @@ namespace Wormhole
                     MySession.Static.Gpss.AddPlayerGps(identityId, ref gps);
                 }
             }
-
             Context.Respond("GPSs added to everyone's list if it didn't already exist");
         }
 
@@ -64,14 +62,16 @@ namespace Wormhole
         [Permission(MyPromoteLevel.Admin)]
         public void SafeZone(float radius = -1)
         {
-            if (radius < 1) radius = (float) Plugin.Config.GateRadius;
+            if (radius < 1) radius = (float)Plugin.Config.GateRadius;
             var entities = MyEntities.GetEntities();
             if (entities != null)
+            {
                 foreach (var entity in entities.Where(static entity =>
                     entity is MySafeZone && entity.DisplayName.Contains("[NPC-IGNORE]_[Wormhole-SafeZone]")))
                 {
                     entity.Close();
-                }
+				}
+            }
 
             foreach (var server in Plugin.Config.WormholeGates)
             {
@@ -105,12 +105,14 @@ namespace Wormhole
             {
                 var entities = MyEntities.GetEntities();
                 if (entities is { })
+                {
                     foreach (var grid in entities
                         .OfType<MyCubeGrid>()
                         .Where(static b => b.DisplayName.Contains("[NPC-IGNORE]_[Wormhole-Gate]")))
                     {
                         grid.Close();
                     }
+                }
 
                 foreach (var gateViewModel in Plugin.Config.WormholeGates)
                 {
@@ -199,10 +201,10 @@ namespace Wormhole
             if (Context.Player == null)
                 return;
 
-            var identity = (MyIdentity) Context.Player.Identity;
+            var identity = (MyIdentity)Context.Player.Identity;
             Utilities.KillCharacters(identity.SavedCharacters);
 
-            Sync.Players.KillPlayer((MyPlayer) Context.Player);
+            Sync.Players.KillPlayer((MyPlayer)Context.Player);
         }
 
         [Command("show discovery", "show the current discovered gates")]
@@ -212,7 +214,7 @@ namespace Wormhole
 
             if (Context.Player is null)
                 sb.AppendLine("Discovered Gates:");
-                    
+
             foreach (var (ip, discovery) in Context.Torch.Managers.GetManager<WormholeDiscoveryManager>().Discoveries)
             {
                 sb.AppendLine($"= {ip} - {discovery.Gates.Count} gates");
@@ -225,7 +227,7 @@ namespace Wormhole
                     }
                 }
             }
-            
+
             if (Context.Player is null)
                 Context.Respond(sb.ToString());
             else

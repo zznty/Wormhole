@@ -22,12 +22,11 @@ namespace Wormhole.Views
         }
 
         private Plugin Plugin { get; }
-        private GateViewModel _selectedGate = new ();
+        private GateViewModel _selectedGate = new();
 
         private void SaveButton_OnClick(object sender, RoutedEventArgs e)
         {
             Plugin.Save();
-            //Utilities.WormholeGateConfigUpdate();
         }
 
         private void Add_OnClick(object sender, RoutedEventArgs e)
@@ -59,7 +58,7 @@ namespace Wormhole.Views
             Yinput.Text = string.Empty;
             Zinput.Text = string.Empty;
             SendToHinput.Text = string.Empty;
-            _selectedGate = new ();
+            _selectedGate = new();
             DestinationsButton.IsEnabled = false;
         }
 
@@ -77,7 +76,7 @@ namespace Wormhole.Views
             Descriptioninput.Text = gate.Description;
             try
             {
-                GateColorPicker.SelectedColor = (Color) ColorConverter.ConvertFromString(gate.HexColor)!;
+                GateColorPicker.SelectedColor = (Color)ColorConverter.ConvertFromString(gate.HexColor)!;
             }
             catch (FormatException)
             {

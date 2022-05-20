@@ -7,7 +7,7 @@ namespace Wormhole.Managers;
 
 public class WhitelistManager : Manager, IEventHandler
 {
-    [Dependency] private IEventManager _eventManager = null!;
+	[Dependency] private readonly IEventManager _eventManager = null!;
 
     public WhitelistManager(ITorchBase torchInstance) : base(torchInstance)
     {

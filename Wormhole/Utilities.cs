@@ -37,11 +37,11 @@ namespace Wormhole
             {
                 if (!block.Pilot.GetPlayerId(out var playerId))
                     continue;
-                
+
                 yield return playerId.SteamId;
             }
         }
-        
+
         public static bool UpdateGridsPositionAndStop(ICollection<MyObjectBuilder_CubeGrid> grids, Vector3D newPosition)
         {
             var biggestGrid = grids.OrderByDescending(static b => b.CubeBlocks.Count).First();
@@ -59,18 +59,15 @@ namespace Wormhole
 
                 var gridPositionOrientation = grid.PositionAndOrientation.Value;
                 if (grid == biggestGrid)
-                {
                     gridPositionOrientation.Position = newPosition;
-                }
                 else
-                {
                     gridPositionOrientation.Position = newPosition + gridPositionOrientation.Position - delta;
-                }
+
                 grid.PositionAndOrientation = gridPositionOrientation;
 
                 // reset velocity
-                grid.AngularVelocity = new ();
-                grid.LinearVelocity = new ();
+                grid.AngularVelocity = new();
+                grid.LinearVelocity = new();
                 return true;
             });
         }
@@ -106,6 +103,7 @@ namespace Wormhole
 
             if (ownerCnt > 0 && gridOwnerList[0] != 0)
                 return gridOwnerList[0];
+
             if (ownerCnt > 1)
                 return gridOwnerList[1];
 
@@ -126,12 +124,15 @@ namespace Wormhole
         public static Vector3D? FindFreePos(BoundingSphereD gate, float sphereradius)
         {
             var rand = new Random();
-
             MyEntity safezone = null;
             var entities = MyEntities.GetEntitiesInSphere(ref gate);
+
             foreach (var myentity in entities)
+            {
                 if (myentity is MySafeZone)
                     safezone = myentity;
+            }
+
             return MyEntities.FindFreePlaceCustom(
                 gate.RandomToUniformPointInSphere(rand.NextDouble(), rand.NextDouble(), rand.NextDouble()),
                 sphereradius, 20, 5, 1, 0, safezone);
@@ -146,6 +147,7 @@ namespace Wormhole
         {
             Vector3? vector = null;
             var gridradius = 0F;
+
             foreach (var mygrid in grids)
             {
                 var gridSphere = mygrid.CalculateBoundingSphere();
@@ -161,8 +163,7 @@ namespace Wormhole
                 if (newRadius > gridradius)
                     gridradius = newRadius;
             }
-
-            return (float) new BoundingSphereD(vector.Value, gridradius).Radius;
+            return (float)new BoundingSphereD(vector.Value, gridradius).Radius;
         }
 
         public static BoundingSphereD FindGridsBoundingSphere(IEnumerable<MyObjectBuilder_CubeGrid> grids,
@@ -173,6 +174,7 @@ namespace Wormhole
             var matrix = biggestGrid.PositionAndOrientation!.Value.GetMatrix();
             var matrix2 = MatrixD.Invert(matrix);
             var array = new Vector3D[8];
+
             foreach (var grid in grids)
             {
                 if (grid == biggestGrid) continue;
@@ -190,7 +192,7 @@ namespace Wormhole
             }
 
             var boundingSphereD = BoundingSphereD.CreateFromBoundingBox(boxD);
-            return new (new MyOrientedBoundingBoxD(boxD, matrix).Center, boundingSphereD.Radius);
+            return new(new MyOrientedBoundingBoxD(boxD, matrix).Center, boundingSphereD.Radius);
         }
 
         public static void KillCharacter(MyCharacter character)
@@ -198,8 +200,8 @@ namespace Wormhole
             Log.Info("killing character " + character.DisplayName);
             if (character.IsUsing is MyCockpit cockpit)
                 cockpit.RemovePilot();
-            character.GetIdentity()?.ChangeCharacter(null);
 
+            character.GetIdentity()?.ChangeCharacter(null);
             character.EnableBag(false);
             character.Close();
         }
@@ -212,7 +214,6 @@ namespace Wormhole
                     continue;
                 KillCharacter(entity);
             }
-
             characters.Clear();
         }
 
@@ -223,7 +224,7 @@ namespace Wormhole
             var component = cockpit.ComponentContainer.Components.FirstOrDefault(static b =>
                 b.Component is MyObjectBuilder_HierarchyComponentBase);
 
-            ((MyObjectBuilder_HierarchyComponentBase) component?.Component)?.Children.Clear();
+            ((MyObjectBuilder_HierarchyComponentBase)component?.Component)?.Children.Clear();
         }
 
         public static bool TryParseGps(string raw, out string name, out Vector3D position, out Color color)
@@ -231,16 +232,18 @@ namespace Wormhole
             name = default;
             position = default;
             color = default;
-            
+
             var parts = raw.Split(':');
             if (parts.Length != 7)
                 return false;
+
             name = parts[1];
             if (!double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var xCord) ||
                 !double.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var yCord) ||
                 !double.TryParse(parts[4], NumberStyles.Float, CultureInfo.InvariantCulture, out var zCord))
                 return false;
-            position = new (xCord, yCord, zCord);
+
+            position = new(xCord, yCord, zCord);
             color = ColorUtils.TranslateColor(parts[5]);
             return true;
         }
@@ -251,14 +254,14 @@ namespace Wormhole
                 new JoinServerMessage(ToIpEndpoint(address, MySandboxGame.ConfigDedicated.ServerPort).ToString()),
                 clientId);
         }
-        
+
         public static IPEndPoint ToIpEndpoint(string hostNameOrAddress, int defaultPort)
         {
             var parts = hostNameOrAddress.Split(':');
-            
+
             if (parts.Length == 2)
                 defaultPort = int.Parse(parts[1]);
-            
+
             var addrs = Dns.GetHostAddresses(parts[0]);
             return new (addrs.FirstOrDefault(addr => addr.AddressFamily == AddressFamily.InterNetwork)
                         ??
@@ -268,19 +271,6 @@ namespace Wormhole
         public static Vector3D PickRandomPointInSpheres(Vector3D center, float innerRadius, float outerRadius)
         {
             return center;
-            /*var innerSphere = new BoundingSphereD(center, innerRadius);
-            var outerSphere = new BoundingSphereD(center, outerRadius);
-
-            for (var i = 0; i < 15; i++)
-            {
-                var pointInner = GetRandomPoint(innerSphere);
-                var pointOuter = GetRandomPoint(outerSphere);
-            
-                var n = MyRandom.Instance.NextDouble();
-
-                // idk how compute random point between 2 spheres, fucking math
-                // TODO add math
-            }*/
         }
         
         private static Vector3D GetRandomPoint(BoundingSphereD sphere)
@@ -295,11 +285,8 @@ namespace Wormhole
             return new(x, y, z);
         }
     }
-    
-    // parsing helper
-
 }
 namespace System.Runtime.CompilerServices
 {
-    internal class IsExternalInit{}
+    internal class IsExternalInit { }
 }
