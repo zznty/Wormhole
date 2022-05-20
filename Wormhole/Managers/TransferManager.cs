@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Text.RegularExpressions;
 using NLog;
 using Sandbox.Engine.Multiplayer;
+using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using Torch.API;
 using Torch.Managers;
 using Wormhole.Managers.Events;
@@ -98,6 +101,20 @@ namespace Wormhole.Managers
                 var spawnedInfo = new IngoingGridSpawnedEvent(fileInfo, dest, grids);
                 GridTransferEventShim.RaiseEvent(ref spawnedInfo);
             });
+
+            var PlayerName = fileInfo.PlayerName;
+            Log.Warn($"Player {PlayerName} used wormhole to jump to this server.");
+
+            if (Plugin.Instance.Config.JumpInNotification != string.Empty)
+            {
+                var JumpIn = Plugin.Instance.Config.JumpInNotification;
+
+                if (JumpIn.Contains("{PlayerName}"))
+                    JumpIn = Regex.Replace(JumpIn, @"{PlayerName}", $"{PlayerName}");
+
+                MyAPIGateway.Utilities.SendMessage(JumpIn);
+            }
+
             return true;
         }
     }

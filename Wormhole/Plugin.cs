@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using NLog;
@@ -13,6 +14,7 @@ using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Multiplayer;
 using Sandbox.Game.World;
+using Sandbox.ModAPI;
 using Torch;
 using Torch.API;
 using Torch.API.Plugins;
@@ -369,6 +371,23 @@ namespace Wormhole
                 _clientEffectsManager.NotifyJumpStatusChanged(JumpStatus.Perform, gateViewModel, grid);
 
                 //MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);
+
+                var JumpTo = dest.Name;
+                var PlayerName = playerInCharge.DisplayName;
+                Log.Warn($"Player {PlayerName} used wormhole to jump to gate {JumpTo}");
+
+                if (Config.JumpOutNotification != string.Empty)
+                {
+                    var JumpOut = Config.JumpOutNotification;
+
+                    if (JumpOut.Contains("{PlayerName}"))
+                        JumpOut = Regex.Replace(JumpOut, @"{PlayerName}", $"{PlayerName}");
+
+                    if (JumpOut.Contains("{JumpTo}"))
+                        JumpOut = Regex.Replace(JumpOut, @"{JumpTo}", $"{JumpTo}");
+
+                    MyAPIGateway.Utilities.SendMessage(JumpOut);
+                }
 
                 var objectBuilders = grids.Select(b => (MyObjectBuilder_CubeGrid)b.GetObjectBuilder()).ToList();
 

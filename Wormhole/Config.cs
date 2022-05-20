@@ -52,6 +52,12 @@ namespace Wormhole
                 "Keep ownership & builtBy on blocks. If false, all blocks will be transferred to player that requested jump")]
         public bool KeepOwnership { get; set; }
 
+        [Display(Name = "Jump Out Notification", Description = "Send Chat Notification when player Jump to other server.")]
+        public string JumpOutNotification { get; set; } = "Player {PlayerName} used WormHole to go to {JumpTo} Bye!, Игрок {PlayerName} использовал Червоточину, чтобы прыгнуть в {JumpTo} Пока!";
+
+        [Display(Name = "Jump In Notification", Description = "Send Chat Notification when player Jump to this server.")]
+        public string JumpInNotification { get; set; } = "Player {PlayerName} arrived to this server, Welcome!, Игрок {PlayerName} прибыл на этот сервер, добро пожаловать!";
+
         [Display(Name = "On Jump, Check if target server is full", Description = "On Jump, Check if target server is full.")]
         public bool CheckIfTargetServerFull { get; set; } = true;
     }
