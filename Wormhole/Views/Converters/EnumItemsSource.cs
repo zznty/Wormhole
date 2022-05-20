@@ -15,7 +15,7 @@ namespace Wormhole.Views.Converters
         {
             return Enum.GetValues(value.GetType())
                 .Cast<Enum>()
-                .Select(e => new ValueDescription { Value = e, Description = e.Description()})
+                .Select(e => new ValueDescription { Value = e, Description = e.Description() })
                 .ToList();
         }
 

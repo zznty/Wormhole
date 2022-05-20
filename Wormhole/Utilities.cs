@@ -268,7 +268,7 @@ namespace Wormhole
                 defaultPort = int.Parse(parts[1]);
 
             var addrs = Dns.GetHostAddresses(parts[0]);
-            return new (addrs.FirstOrDefault(addr => addr.AddressFamily == AddressFamily.InterNetwork)
+            return new(addrs.FirstOrDefault(addr => addr.AddressFamily == AddressFamily.InterNetwork)
                         ??
                         addrs.First(), defaultPort);
         }

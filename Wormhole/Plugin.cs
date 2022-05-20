@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using NLog;
@@ -264,11 +265,11 @@ namespace Wormhole
                       throw new InvalidOperationException($"Invalid gps position {dest.Gps}");
 
             var box = grids.Select(static b => b.PositionComp.WorldAABB)
-                .Aggregate(static(a, b) => a.Include(b));
+                .Aggregate(static (a, b) => a.Include(b));
             var toGate = new BoundingSphereD(pos, Config.GateRadius);
 
             var freePos = Utilities.FindFreePos(toGate,
-                (float) BoundingSphereD.CreateFromBoundingBox(box).Radius);
+                (float)BoundingSphereD.CreateFromBoundingBox(box).Radius);
 
             if (freePos is null)
                 return;
@@ -306,12 +307,12 @@ namespace Wormhole
             if (_discoveryManager.IsLocalGate(dest.Name))
             {
                 var box = grids.Select(static b => b.PositionComp.WorldAABB)
-                    .Aggregate(static(a, b) => a.Include(b));
+                    .Aggregate(static (a, b) => a.Include(b));
                 var toGatePoint = destGate.Position;
                 var toGate = new BoundingSphereD(toGatePoint, Config.GateRadius);
 
                 var freePos = Utilities.FindFreePos(toGate,
-                    (float) BoundingSphereD.CreateFromBoundingBox(box).Radius);
+                    (float)BoundingSphereD.CreateFromBoundingBox(box).Radius);
 
                 if (freePos is null)
                 {

@@ -12,7 +12,7 @@ public static class RequestRespawnPatch
 {
     [ReflectedMethodInfo(typeof(MySpaceRespawnComponent), "RespawnRequest_Implementation")]
     private static MethodInfo _requestRespawnMethod = null!;
-    
+
     public static Func<ulong, bool> RespawnScreenRequest;
 
     public static void Patch(PatchContext context)

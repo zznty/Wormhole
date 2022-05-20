@@ -9,7 +9,7 @@ public class TransferFileInfo
 
     public static TransferFileInfo ParseFileName(string path)
     {
-        TransferFileInfo info = new ();
+        TransferFileInfo info = new();
         var pathItems = path.Split('_');
         if (pathItems.Length != 4) return null;
 
@@ -19,7 +19,7 @@ public class TransferFileInfo
 
         var lastPart = pathItems[3];
         if (lastPart.EndsWith(".sbcB5"))
-			lastPart = lastPart.Substring(0, lastPart.Length - ".sbcB5".Length);
+            lastPart = lastPart.Substring(0, lastPart.Length - ".sbcB5".Length);
 
         info.GridName = lastPart;
 

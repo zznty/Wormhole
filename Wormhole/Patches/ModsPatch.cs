@@ -12,10 +12,10 @@ namespace Wormhole.Patches;
 public static class ModsPatch
 {
     private const ulong ModId = 2758536657;
-    
+
     [ReflectedMethodInfo(typeof(MyLocalCache), nameof(MyLocalCache.LoadCheckpoint))]
     private static MethodInfo _loadCheckpointMethod = null!;
-    
+
     public static void Patch(PatchContext context)
     {
         context.GetPattern(_loadCheckpointMethod).Suffixes.Add(new Action<MyObjectBuilder_Checkpoint>(Suffix).Method);

@@ -7,7 +7,7 @@ namespace Wormhole.Managers;
 
 public class WhitelistManager : Manager, IEventHandler
 {
-	[Dependency] private readonly IEventManager _eventManager = null!;
+    [Dependency] private readonly IEventManager _eventManager = null!;
 
     public WhitelistManager(ITorchBase torchInstance) : base(torchInstance)
     {
@@ -26,7 +26,7 @@ public class WhitelistManager : Manager, IEventHandler
 
         if (!info.Gate.RemoveFromSourceWhitelist || !config.EnableWhitelist)
             return;
-        
+
         foreach (var clientId in Utilities.GetAllCharactersClientIds(info.Grids))
         {
             config.Whitelist.Remove(clientId);
@@ -40,7 +40,7 @@ public class WhitelistManager : Manager, IEventHandler
 
         if (!info.Gate.AddToDestinationWhitelist || !config.EnableWhitelist)
             return;
-        
+
         foreach (var clientId in info.File.PlayerIdsMap.Values)
         {
             if (!config.Whitelist.Contains(clientId))

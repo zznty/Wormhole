@@ -40,17 +40,17 @@ internal static class GridTransferEventShim
     {
         IngoingGridTransferEvents.RaiseEvent(ref info);
     }
-    
+
     public static void RaiseEvent(ref IngoingGridSpawnedEvent info)
     {
         IngoingGridSpawnedEvents.RaiseEvent(ref info);
     }
-    
+
     public static void RaiseEvent(ref OutgoingGridTransferEvent info)
     {
         OutgoingGridTransferEvents.RaiseEvent(ref info);
     }
-    
+
     public static void RaiseEvent(ref InternalGridTransferEvent info)
     {
         InternalGridTransferEvents.RaiseEvent(ref info);

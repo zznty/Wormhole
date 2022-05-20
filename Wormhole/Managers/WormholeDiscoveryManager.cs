@@ -57,7 +57,7 @@ namespace Wormhole.Managers
         private void TorchOnGameStateChanged(MySandboxGame game, TorchGameState newState)
         {
             if (newState != TorchGameState.Loaded) return;
-            
+
             _directoryPath = Path.Combine(Plugin.Instance.Config.Folder, "admingates_discovery");
             foreach (var file in Directory.CreateDirectory(_directoryPath).GetFiles("*.xml"))
             {

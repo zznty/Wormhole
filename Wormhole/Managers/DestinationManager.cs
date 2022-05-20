@@ -19,13 +19,13 @@ namespace Wormhole.Managers
     public class DestinationManager : Manager
     {
         private const ulong ModId = 2603356015;
-        private static readonly Guid ComponentGuid = new ("7314ed35-7fe1-4652-9329-f525facdd32a");
+        private static readonly Guid ComponentGuid = new("7314ed35-7fe1-4652-9329-f525facdd32a");
 
         [Dependency] private readonly InstanceManager _instanceManager = null!;
-        
+
         public readonly IList<MyDefinitionId> JdDefinitions = new List<MyDefinitionId>();
         private bool _isModPresent;
-        
+
         public DestinationManager(ITorchBase torchInstance) : base(torchInstance)
         {
         }
@@ -42,7 +42,7 @@ namespace Wormhole.Managers
 
         private void TorchOnGameStateChanged(MySandboxGame game, TorchGameState newState)
         {
-            if (newState != TorchGameState.Loading || _instanceManager?.DedicatedConfig?.SelectedWorld?.WorldConfiguration is not {} configuration)
+            if (newState != TorchGameState.Loading || _instanceManager?.DedicatedConfig?.SelectedWorld?.WorldConfiguration is not { } configuration)
                 return;
             _isModPresent = configuration.Mods.Exists(static b => b.PublishedFileId == ModId);
         }
