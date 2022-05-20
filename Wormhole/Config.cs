@@ -58,6 +58,12 @@ namespace Wormhole
         [Display(Name = "Jump In Notification", Description = "Send Chat Notification when player Jump to this server.")]
         public string JumpInNotification { get; set; } = "Player {PlayerName} arrived to this server, Welcome!, Игрок {PlayerName} прибыл на этот сервер, добро пожаловать!";
 
+        [Display(Name = "Min Arrival Distance From Gate", Description = "Minimum spawn distance (metters) from gate when arriving from other server, must be less than MAX!, Server to Server Only.")]
+        public int MinDistance { get; set; } = 1;
+
+        [Display(Name = "Max Arrival Distance From Gate", Description = "Maximum spawn distance (metters) from gate when arriving from other server, must be more then MIN!, Server to Server Only.")]
+        public int MaxDistance { get; set; } = 5;
+
         [Display(Name = "On Jump, Check if target server is full", Description = "On Jump, Check if target server is full.")]
         public bool CheckIfTargetServerFull { get; set; } = true;
     }

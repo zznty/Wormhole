@@ -262,11 +262,10 @@ namespace Wormhole
         {
             var pos = dest.TryParsePosition() ??
                       throw new InvalidOperationException($"Invalid gps position {dest.Gps}");
-            var point = Utilities.PickRandomPointInSpheres(pos, dest.InnerRadius, dest.OuterRadius);
-            
+
             var box = grids.Select(static b => b.PositionComp.WorldAABB)
                 .Aggregate(static(a, b) => a.Include(b));
-            var toGate = new BoundingSphereD(point, Config.GateRadius);
+            var toGate = new BoundingSphereD(pos, Config.GateRadius);
 
             var freePos = Utilities.FindFreePos(toGate,
                 (float) BoundingSphereD.CreateFromBoundingBox(box).Radius);
@@ -510,6 +509,10 @@ namespace Wormhole
 
                 if (Sync.Players.TryGetPlayerIdentity(new(fileTransferInfo.SteamUserId))?.Character is { } character)
                     Utilities.KillCharacter(character);
+
+                MyPlayer myPlayer = Sync.Players.TryGetPlayerBySteamId(fileTransferInfo.SteamUserId);
+                if (myPlayer != null && myPlayer.Character != null && !myPlayer.Character.IsDead)
+                    Utilities.KillCharacter(myPlayer.Character);
 
                 _transferManager.QueueIncomingTransfer(transferFile, fileTransferInfo);
 

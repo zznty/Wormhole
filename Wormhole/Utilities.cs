@@ -1,16 +1,13 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 using NLog;
 using Sandbox;
 using Sandbox.Common.ObjectBuilders;
-using Sandbox.Engine.Multiplayer;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character;
 using Torch.Mod;
@@ -20,9 +17,7 @@ using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Game.ObjectBuilders.Components;
-using VRage.Groups;
-using VRage.Library.Utils;
-using VRage.ModAPI;
+using VRage.Utils;
 using VRageMath;
 
 namespace Wormhole
@@ -30,6 +25,7 @@ namespace Wormhole
     public static class Utilities
     {
         public static readonly Logger Log = LogManager.GetCurrentClassLogger();
+        private static readonly Random RandomPos = new Random();
 
         public static IEnumerable<ulong> GetAllCharactersClientIds(IEnumerable<MyCubeGrid> grids)
         {
@@ -45,9 +41,17 @@ namespace Wormhole
         public static bool UpdateGridsPositionAndStop(ICollection<MyObjectBuilder_CubeGrid> grids, Vector3D newPosition)
         {
             var biggestGrid = grids.OrderByDescending(static b => b.CubeBlocks.Count).First();
-            newPosition -= FindGridsBoundingSphere(grids, biggestGrid).Center -
-                           biggestGrid.PositionAndOrientation!.Value.Position;
             var delta = biggestGrid.PositionAndOrientation!.Value.Position;
+
+            // make sure admin didnt failed here.
+            if (Plugin.Instance.Config.MinDistance > Plugin.Instance.Config.MaxDistance)
+            {
+                Plugin.Instance.Config.MinDistance = 1;
+                Plugin.Instance.Config.MaxDistance = 5;
+            }
+
+            newPosition = RandomPositionFromGatePoint(newPosition, RandomPos.Next(Plugin.Instance.Config.MinDistance, Plugin.Instance.Config.MaxDistance));
+            newPosition -= FindGridsBoundingSphere(grids, biggestGrid).Center - biggestGrid.PositionAndOrientation!.Value.Position;
 
             return grids.All(grid =>
             {
@@ -203,6 +207,7 @@ namespace Wormhole
 
             character.GetIdentity()?.ChangeCharacter(null);
             character.EnableBag(false);
+            character.Kill(true, new MyDamageInformation(true, 9999, MyStringHash.GetOrCompute("Deformation"), 0));
             character.Close();
         }
 
@@ -221,7 +226,7 @@ namespace Wormhole
         {
             // wasted 15 hours to find this fucking HierarchyComponent trap
             cockpit.Pilot = null;
-            var component = cockpit.ComponentContainer.Components.FirstOrDefault(static b =>
+            var component = cockpit.ComponentContainer?.Components?.FirstOrDefault(static b =>
                 b.Component is MyObjectBuilder_HierarchyComponentBase);
 
             ((MyObjectBuilder_HierarchyComponentBase)component?.Component)?.Children.Clear();
@@ -268,21 +273,17 @@ namespace Wormhole
                         addrs.First(), defaultPort);
         }
 
-        public static Vector3D PickRandomPointInSpheres(Vector3D center, float innerRadius, float outerRadius)
+        public static Vector3D RandomPositionFromGatePoint(Vector3D GatePoint, double distance)
         {
-            return center;
-        }
-        
-        private static Vector3D GetRandomPoint(BoundingSphereD sphere)
-        {
-            var u = MyRandom.Instance.NextDouble();
-            var v = MyRandom.Instance.NextDouble();
-            var theta = 2 * Math.PI * u;
-            var phi = Math.Acos(2 * v - 1);
-            var x = sphere.Center.X + sphere.Radius * Math.Sin(phi) * Math.Cos(theta);
-            var y = sphere.Center.Y + sphere.Radius * Math.Sin(phi) * Math.Sin(theta);
-            var z = sphere.Center.Z + sphere.Radius * Math.Cos(phi);
-            return new(x, y, z);
+            Random NewRandom = new Random();
+            var Zrand = (NewRandom.NextDouble() * 2) - 1;
+            var PI = NewRandom.NextDouble() * 2 * Math.PI;
+            var ZrandSqrt = Math.Sqrt(1 - (Zrand * Zrand));
+            var direction = new Vector3D(ZrandSqrt * Math.Cos(PI), ZrandSqrt * Math.Sin(PI), Zrand);
+
+            direction.Normalize();
+            GatePoint += direction * -2;
+            return GatePoint + (direction * distance);
         }
     }
 }
