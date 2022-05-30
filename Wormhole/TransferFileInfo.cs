@@ -24,7 +24,7 @@ public class TransferFileInfo
         return info;
     }
 
-    public string CreateLogString()
+    public virtual string CreateLogString()
     {
         return
             $"dest: {DestinationWormhole};steamid: {SteamUserId};playername: {PlayerName};gridName: {GridName};";

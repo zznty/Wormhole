@@ -174,11 +174,14 @@ namespace Wormhole
         [Permission(MyPromoteLevel.Admin)]
         public void ClearSync()
         {
-            var gridDir = new DirectoryInfo(Plugin.Config.Folder + "/" + Plugin.AdminGatesFolder);
-
-            if (!gridDir.Exists) return;
-
-            foreach (var file in gridDir.GetFiles())
+            var manager = Context.Torch.CurrentSession.Managers.GetManager<FileTransferFsManager>();
+            if (manager is null)
+            {
+                Context.Respond("Wormhole is using non default transfer method, this command is unavailable.");
+                return;
+            }
+            
+            foreach (var file in manager.AdminGatesDirectory.GetFiles())
             {
                 if (file == null) continue;
 
@@ -213,10 +216,10 @@ namespace Wormhole
             if (Context.Player is null)
                 sb.AppendLine("Discovered Gates:");
                     
-            foreach (var (ip, discovery) in Context.Torch.Managers.GetManager<WormholeDiscoveryManager>().Discoveries)
+            foreach (var (ip, gates) in Context.Torch.CurrentSession.Managers.GetManager<IWormholeDiscoveryManager>().Servers)
             {
-                sb.AppendLine($"= {ip} - {discovery.Gates.Count} gates");
-                foreach (var gate in discovery.Gates)
+                sb.AppendLine($"= {ip} - {gates.Count()} gates");
+                foreach (var gate in gates)
                 {
                     sb.AppendLine($"{" ",-3}+ {gate.Name}:");
                     foreach (var destination in gate.Destinations)

@@ -13,7 +13,7 @@ using Wormhole.ViewModels;
 
 namespace Wormhole.Managers
 {
-    public class WormholeDiscoveryManager : Manager
+    public class WormholeDiscoveryManager : Manager, IWormholeDiscoveryManager
     {
         private static readonly XmlSerializer DiscoverySerializer = new (typeof(WormholeDiscovery));
         
@@ -23,6 +23,8 @@ namespace Wormhole.Managers
         };
 
         public readonly ConcurrentDictionary<string, WormholeDiscovery> Discoveries = new ();
+
+        public IEnumerable<(string ip, IEnumerable<GateViewModel> gates)> Servers => Discoveries.Select(b => (b.Key, b.Value.Gates.AsEnumerable()));
 
         private string _directoryPath = null!;
         

@@ -7,6 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wormhole", "Wormhole\Wormho
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wormhole.Mod", "Wormhole.Mod\Wormhole.Mod.csproj", "{E154EE3A-8DF5-4DAB-A5F7-418CCC1611C3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wormhole.PostgreSql", "Wormhole.PostgreSql\Wormhole.PostgreSql.csproj", "{8A8D84B2-EBF7-447F-BE32-90BDAC5ACC8A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Targets", "Targets", "{D254A3C0-5DCE-42D6-953C-EC12D7A7DDBC}"
+	ProjectSection(SolutionItems) = preProject
+		WormholeBuild.props = WormholeBuild.props
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Any CPU = Release|Any CPU
@@ -20,6 +27,10 @@ Global
 		{E154EE3A-8DF5-4DAB-A5F7-418CCC1611C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E154EE3A-8DF5-4DAB-A5F7-418CCC1611C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E154EE3A-8DF5-4DAB-A5F7-418CCC1611C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A8D84B2-EBF7-447F-BE32-90BDAC5ACC8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A8D84B2-EBF7-447F-BE32-90BDAC5ACC8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A8D84B2-EBF7-447F-BE32-90BDAC5ACC8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A8D84B2-EBF7-447F-BE32-90BDAC5ACC8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

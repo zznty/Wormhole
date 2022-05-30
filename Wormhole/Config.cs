@@ -11,12 +11,6 @@ namespace Wormhole
     {
         [XmlArrayItem("Gate")] public MtObservableList<GateViewModel> WormholeGates { get; set; } = new ();
 
-        [Display(Name = "Save Server On Grid Exit", Description = "Warning! May Cause Lag")]
-        public bool SaveOnExit { get; set; }
-
-        [Display(Name = "Save Server On Grid Enter", Description = "Warning! May Cause Lag")]
-        public bool SaveOnEnter { get; set; }
-
         [Display(Name = "Allow Faction Members")]
         public bool AllowInFaction { get; set; }
 

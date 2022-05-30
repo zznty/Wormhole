@@ -23,10 +23,13 @@ namespace Wormhole.Managers
         public async Task StartJump(GateViewModel gateViewModel, MyPlayer player, MyCubeGrid grid)
         {
             // TODO hyper jump effect
-            MyVisualScriptLogicProvider.ShowNotification("Opening the gate...",
-                (int) TimeSpan.FromSeconds(4).TotalMilliseconds, playerId: player.Identity.IdentityId);
             _effectsManager.NotifyJumpStatusChanged(JumpStatus.Started, gateViewModel, grid);
-            await Task.Delay(TimeSpan.FromSeconds(10));
+            for (var i = 0; i < 10; i++)
+            {
+                MyVisualScriptLogicProvider.ShowNotification($"Jumping in {10 - i}...",
+                    1000, playerId: player.Identity.IdentityId);
+                await Task.Delay(TimeSpan.FromSeconds(1));
+            }
             _effectsManager.NotifyJumpStatusChanged(JumpStatus.Ready, gateViewModel, grid);
         }
     }

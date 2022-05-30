@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using NLog;
 using ProtoBuf;
+using Sandbox;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Engine.Multiplayer;
 using Sandbox.Game;
@@ -18,7 +19,9 @@ using Sandbox.Game.Multiplayer;
 using Sandbox.Game.World;
 using Torch;
 using Torch.API;
+using Torch.API.Managers;
 using Torch.API.Plugins;
+using Torch.API.Session;
 using Torch.Event;
 using Torch.Mod;
 using Torch.Mod.Messages;
@@ -45,36 +48,21 @@ namespace Wormhole
 
         private Gui _control;
 
-        // public const string AdminGatesConfig = "admingatesconfig";
-
-        // private const string AdminGatesConfirmReceivedFolder = "admingatesconfirmreceived";
-        // private const string AdminGatesConfirmSentFolder = "admingatesconfirmsent";
-        private const string AdminGatesBackupFolder = "grids_backup";
-
-        public const string AdminGatesFolder = "admingates";
-        private Task _saveOnEnterTask;
-
-        // The actual task of saving the game on exit or enter
-        private Task _saveOnExitTask;
-
         private int _tick;
-
-        private string _gridDir;
-
-        // private string _gridDirSent;
-        // private string _gridDirReceived;
-        private string _gridDirBackup;
         
         private ClientEffectsManager _clientEffectsManager;
         private JumpManager _jumpManager;
         private DestinationManager _destinationManager;
-        private WormholeDiscoveryManager _discoveryManager;
+        private IWormholeDiscoveryManager _discoveryManager;
         private ServerQueryManager _serverQueryManager;
+        private IFileTransferManager _fileTransferManager;
 
         public static Plugin Instance { get; private set; }
         public Config Config => _config?.Data;
 
         public UserControl GetControl() => _control ??= new (this);
+
+        public Func<IEnumerable<SessionManagerFactoryDel>> SessionManagerFactoriesFactory;
 
         public override void Init(ITorchBase torch)
         {
@@ -88,16 +76,51 @@ namespace Wormhole
             Torch.Managers.AddManager(_jumpManager);
             _destinationManager = new (Torch);
             Torch.Managers.AddManager(_destinationManager);
-            _discoveryManager = new (Torch);
-            Torch.Managers.AddManager(_discoveryManager);
             _serverQueryManager = new (Torch);
             Torch.Managers.AddManager(_serverQueryManager);
             Torch.Managers.AddManager(new SpawnManager(Torch));
-            _transferManager = new(Torch);
-            Torch.Managers.AddManager(_transferManager);
             Torch.Managers.AddManager(new WhitelistManager(Torch));
+            
+            Torch.Managers.GetManager<ITorchSessionManager>().AddFactory(s => _transferManager = new(s.Torch));
 
             _registerAction(typeof(Plugin).Assembly);
+            SessionManagerFactoriesFactory = DefaultFactoriesFactory;
+            
+            Torch.GameStateChanged += TorchOnGameStateChanged;
+        }
+        
+        private void TorchOnGameStateChanged(MySandboxGame game, TorchGameState newState)
+        {
+            switch (newState)
+            {
+                case TorchGameState.Loading:
+                    var manager = Torch.Managers.GetManager<ITorchSessionManager>();
+
+                    foreach (var factoryDel in SessionManagerFactoriesFactory())
+                    {
+                        manager.AddFactory(factoryDel);
+                    }
+                    break;
+                case TorchGameState.Loaded:
+                    _fileTransferManager = Torch.CurrentSession.Managers.GetManager<IFileTransferManager>();
+                    _discoveryManager = Torch.CurrentSession.Managers.GetManager<IWormholeDiscoveryManager>();
+                    break;
+                case TorchGameState.Creating:
+                case TorchGameState.Created:
+                case TorchGameState.Unloading:
+                case TorchGameState.Unloaded:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
+            }
+        }
+
+        private IEnumerable<SessionManagerFactoryDel> DefaultFactoriesFactory()
+        {
+            yield return s => new FileTransferFsManager(s.Torch, Config);
+            yield return s => new FileTransferBackupManager(s.Torch);
+            yield return s => new FileTransferManager(s.Torch);
+            yield return s => new WormholeDiscoveryManager(s.Torch);
         }
 
         #region WorkSources
@@ -113,7 +136,6 @@ namespace Wormhole
                 {
                     var gate = new BoundingSphereD(wormhole.Position, Config.GateRadius);
                     WormholeTransferOut(wormhole, gate);
-                    WormholeTransferIn(wormhole.Name.Trim());
                 }
             }
             catch (Exception e)
@@ -130,7 +152,7 @@ namespace Wormhole
         {
             _config.Save();
             _clientEffectsManager.RecalculateVisualData();
-            _discoveryManager.EnsureLatestDiscovery();
+            _discoveryManager?.EnsureLatestDiscovery();
         }
 
         private void SetupConfig()
@@ -384,8 +406,6 @@ namespace Wormhole
                     MyVisualScriptLogicProvider.SendChatMessageColored(info.CancelMessage, Color.Red, "Wormhole", playerInCharge.Identity.IdentityId);
                     return;
                 }
-                
-                var filename = transferFileInfo.CreateFileName();
 
                 wormholeDrive.CurrentStoredPower = 0;
                 _clientEffectsManager.NotifyJumpStatusChanged(JumpStatus.Perform, gateViewModel, grid);
@@ -422,126 +442,31 @@ namespace Wormhole
                     sittingPlayerIdentityIds.Add(cockpit.Pilot.OwningPlayerIdentityId.Value);
                     Utilities.SendConnectToServer(ownerIp, playerSteamId);
                 }
-
-                using (var stream =
-                    File.Create(Utilities.CreateBlueprintPath(Path.Combine(Config.Folder, AdminGatesFolder),
-                        filename)))
-                using (var compressStream = new GZipStream(stream, CompressionMode.Compress))
-                    Serializer.Serialize(compressStream, new TransferFile
-                    {
-                        Grids = objectBuilders,
-                        IdentitiesMap = identitiesMap,
-                        PlayerIdsMap = identitiesMap.Select(static b =>
-                            {
-                                Sync.Players.TryGetPlayerId(b.Key, out var id);
-                                return (b.Key, id.SteamId);
-                            }).Where(static b => b.SteamId > 0)
-                            .ToDictionary(static b => b.Key, static b => b.SteamId),
-                        SourceDestinationId = dest.Id,
-                        SourceGateName = gateViewModel.Name
-                    });
-
+                
+                _fileTransferManager.CreateTransfer(transferFileInfo, new()
+                {
+                    Grids = objectBuilders,
+                    IdentitiesMap = identitiesMap,
+                    PlayerIdsMap = identitiesMap.Select(static b =>
+                        {
+                            Sync.Players.TryGetPlayerId(b.Key, out var id);
+                            return (b.Key, id.SteamId);
+                        }).Where(static b => b.SteamId > 0)
+                        .ToDictionary(static b => b.Key, static b => b.SteamId),
+                    SourceDestinationId = dest.Id,
+                    SourceGateName = gateViewModel.Name
+                });
+                
                 foreach (var identity in sittingPlayerIdentityIds.Select(Sync.Players.TryGetIdentity)
                     .Where(b => b.Character is { })) Utilities.KillCharacter(identity.Character);
+                
                 foreach (var cubeGrid in grids)
                 {
                     cubeGrid.Close();
                 }
-
-                // Saves the game if enabled in config.
-                if (!Config.SaveOnExit) return;
-                // (re)Starts the task if it has never been started o´r is done
-                if (_saveOnExitTask is null || _saveOnExitTask.IsCompleted)
-                    _saveOnExitTask = Torch.Save();
             }
         }
 
         #endregion
-
-        #region Ingoing Transferring
-
-        public void WormholeTransferIn(string wormholeName)
-        {
-            EnsureDirectoriesCreated();
-
-            var changes = false;
-
-            foreach (var file in Directory.EnumerateFiles(_gridDir, "*.sbcB5")
-                    .Where(s => Path.GetFileNameWithoutExtension(s).Split('_')[0] == wormholeName))
-                //if file not null if file exists if file is done being sent and if file hasnt been received before
-            {
-                var fileName = Path.GetFileName(file);
-                if (!File.Exists(file)) continue;
-
-                Log.Info("Processing recivied grid: " + fileName);
-                var fileTransferInfo = TransferFileInfo.ParseFileName(fileName);
-                if (fileTransferInfo is null)
-                {
-                    Log.Error("Error parsing file name");
-                    continue;
-                }
-
-                TransferFile transferFile;
-                try
-                {
-                    using var stream = File.OpenRead(file);
-                    using var decompressStream = new GZipStream(stream, CompressionMode.Decompress);
-
-                    transferFile = Serializer.Deserialize<TransferFile>(decompressStream);
-                    if (transferFile.Grids is null || transferFile.IdentitiesMap is null)
-                        throw new InvalidOperationException("File is empty or invalid");
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e, $"Corrupted file at {fileName}");
-                    continue;
-                }
-
-                if (Sync.Players.TryGetPlayerIdentity(new (fileTransferInfo.SteamUserId))?.Character is { } character)
-                    Utilities.KillCharacter(character);
-
-                _transferManager.QueueIncomingTransfer(transferFile, fileTransferInfo);
-
-                changes = true;
-                var backupFileName = fileName;
-                if (File.Exists(Path.Combine(_gridDirBackup, backupFileName)))
-                {
-                    var transferString = Path.GetFileNameWithoutExtension(backupFileName);
-                    var i = 0;
-                    do
-                    {
-                        backupFileName = $"{transferString}_{++i}.sbcB5";
-                    } while (File.Exists(Path.Combine(_gridDirBackup, backupFileName)));
-                }
-                
-                File.Copy(Path.Combine(_gridDir, fileName), Path.Combine(_gridDirBackup, backupFileName));
-
-                File.Delete(Path.Combine(_gridDir, fileName));
-            }
-
-            // Saves game on enter if enabled in config.
-            if (!changes || !Config.SaveOnEnter) return;
-
-            if (_saveOnEnterTask is null || _saveOnEnterTask.IsCompleted)
-                _saveOnEnterTask = Torch.Save();
-        }
-
-        #endregion
-
-        private void EnsureDirectoriesCreated()
-        {
-            _gridDir ??= Path.Combine(Config.Folder, AdminGatesFolder);
-            // _gridDirSent ??= Path.Combine(Config.Folder, AdminGatesConfirmSentFolder);
-            // _gridDirReceived ??= Path.Combine(Config.Folder, AdminGatesConfirmReceivedFolder);
-            _gridDirBackup ??= Path.Combine(Config.Folder, AdminGatesBackupFolder);
-            if (!Directory.Exists(_gridDir))
-                Directory.CreateDirectory(_gridDir);
-            // if (!Directory.Exists(_gridDirSent))
-            //     Directory.CreateDirectory(_gridDirSent);
-            // if (!Directory.Exists(_gridDirReceived))
-            //     Directory.CreateDirectory(_gridDirReceived);
-            if (!Directory.Exists(_gridDirBackup))
-                Directory.CreateDirectory(_gridDirBackup);
-        }
     }
 }

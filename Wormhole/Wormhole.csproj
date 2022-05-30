@@ -3,20 +3,13 @@
     <TargetFramework>net48</TargetFramework>
     <LangVersion>default</LangVersion>
     <PlatformTarget>x64</PlatformTarget>
-    <InformationalVersion>DEV</InformationalVersion>
     <UseWpf>True</UseWpf>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
+  <Import Project="$(SolutionDir)WormholeBuild.props" />
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DebugType>none</DebugType>
   </PropertyGroup>
-  <Target Name="ZipAndCopy" AfterTargets="Build">
-    <WriteLinesToFile File="$(TargetDir)manifest.xml" Lines="$([System.IO.File]::ReadAllText('manifest.xml').Replace('{Version}','$(InformationalVersion)'))" Overwrite="true" Encoding="Unicode" />
-    <MakeDir Directories="$(SolutionDir)zip" ContinueOnError="true" />
-    <ZipDirectory DestinationFile="$(SolutionDir)zip\$(AssemblyName).zip" Overwrite="true" SourceDirectory="$(TargetDir)" />
-    <Copy Condition=" '$(Configuration)' != 'Release' " SourceFiles="$(SolutionDir)zip\$(AssemblyName).zip" DestinationFiles="C:\Users\ltp\Downloads\torch\Plugins\$(AssemblyName).zip" OverwriteReadOnlyFiles="true" />
-    <Copy Condition=" '$(Configuration)' != 'Release' " SourceFiles="$(SolutionDir)zip\$(AssemblyName).zip" DestinationFiles="C:\Users\ltp\Downloads\torch-2\Plugins\$(AssemblyName).zip" OverwriteReadOnlyFiles="true" />
-  </Target>
   <ItemGroup>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>$(SolutionDir)TorchBinaries\NLog.dll</HintPath>

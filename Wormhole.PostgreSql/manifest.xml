@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<PluginManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Name>Wormhole.PostgreSql</Name>
+    <Guid>a2dac676-5593-4bb5-98bf-5a05fad6502c</Guid>
+    <Version>{Version}</Version>
+    <Dependencies>
+        <PluginDependency>
+            <Plugin>93fff70e-f557-4159-8c16-16f293c1250d</Plugin>
+            <MinVersion>{Version}</MinVersion>
+        </PluginDependency>
+    </Dependencies>
+</PluginManifest>

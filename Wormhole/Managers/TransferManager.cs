@@ -17,7 +17,7 @@ namespace Wormhole.Managers
         private readonly ConcurrentDictionary<ulong, (TransferFile, TransferFileInfo)> _queue = new();
         
         [Dependency] private readonly SpawnManager _spawnManager = null!;
-        [Dependency] private readonly WormholeDiscoveryManager _discoveryManager = null!;
+        [Dependency] private readonly IWormholeDiscoveryManager _discoveryManager = null!;
         
         public TransferManager(ITorchBase torchInstance) : base(torchInstance)
         {
