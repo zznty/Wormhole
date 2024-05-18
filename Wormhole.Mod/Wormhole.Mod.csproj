@@ -2,90 +2,9 @@
   <PropertyGroup>
     <LangVersion>6</LangVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <RestoreAdditionalProjectSources>https://nuget.storage.yandexcloud.net/index.json</RestoreAdditionalProjectSources>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="VRage, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)\GameBinaries\VRage.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="VRage.Dedicated, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>$(SolutionDir)\GameBinaries\VRage.Dedicated.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="VRage.Game, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>$(SolutionDir)\GameBinaries\VRage.Game.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="VRage.Game.XmlSerializers, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>$(SolutionDir)\GameBinaries\VRage.Game.XmlSerializers.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="VRage.Input, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>$(SolutionDir)\GameBinaries\VRage.Input.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="VRage.Library, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)\GameBinaries\VRage.Library.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="VRage.Math, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)\GameBinaries\VRage.Math.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="VRage.Math.XmlSerializers, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)\GameBinaries\VRage.Math.XmlSerializers.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="ProtoBuf.Net, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>$(SolutionDir)\GameBinaries\ProtoBuf.Net.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="ProtoBuf.Net.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>$(SolutionDir)\GameBinaries\ProtoBuf.Net.Core.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Sandbox.Common, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>$(SolutionDir)\GameBinaries\Sandbox.Common.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="Sandbox.Game, Version=0.1.1.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>$(SolutionDir)\GameBinaries\Sandbox.Game.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="Sandbox.Game.XmlSerializers, Version=0.1.1.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>$(SolutionDir)\GameBinaries\Sandbox.Game.XmlSerializers.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="Sandbox.Graphics, Version=0.1.1.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>$(SolutionDir)\GameBinaries\Sandbox.Graphics.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="SpaceEngineers.Game, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>$(SolutionDir)\GameBinaries\SpaceEngineers.Game.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="SpaceEngineers.ObjectBuilders, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>$(SolutionDir)\GameBinaries\SpaceEngineers.ObjectBuilders.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="SpaceEngineers.ObjectBuilders.XmlSerializers, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>$(SolutionDir)\GameBinaries\SpaceEngineers.ObjectBuilders.XmlSerializers.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
+    <PackageReference Include="spaceengineersdedicated.referenceassemblies" Version="1.204.17" ExcludeAssets="runtime" />
   </ItemGroup>
 </Project>
