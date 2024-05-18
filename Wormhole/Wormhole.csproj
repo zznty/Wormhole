@@ -14,7 +14,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="SteamQueryNet, Version=1.0.0.5, Culture=neutral, PublicKeyToken=null">
-      <HintPath>$(SolutionDir)lib\SteamQueryNet\SteamQueryNet.dll</HintPath>
+      <HintPath>..\lib\SteamQueryNet\SteamQueryNet.dll</HintPath>
     </Reference>
     <PackageReference Include="Extended.Wpf.Toolkit" Version="4.2.0" />
     <PackageReference Include="System.Memory" Version="4.5.5" ExcludeAssets="runtime" />
