@@ -126,15 +126,9 @@ namespace Wormhole
         public static Vector3D? FindFreePos(BoundingSphereD gate, float sphereradius)
         {
             var rand = new Random();
-
-            MyEntity safezone = null;
-            var entities = MyEntities.GetEntitiesInSphere(ref gate);
-            foreach (var myentity in entities)
-                if (myentity is MySafeZone)
-                    safezone = myentity;
             return MyEntities.FindFreePlaceCustom(
                 gate.RandomToUniformPointInSphere(rand.NextDouble(), rand.NextDouble(), rand.NextDouble()),
-                sphereradius, 20, 5, 1, 0, safezone);
+                sphereradius, allowSafezones: true);
         }
 
         public static string LegalCharOnly(string text)
