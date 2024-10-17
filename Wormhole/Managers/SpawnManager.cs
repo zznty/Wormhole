@@ -90,10 +90,8 @@ namespace Wormhole.Managers
 
                 var id = new MyPlayer.PlayerId(clientId);
 
-                Sync.Players.GetPrivateField<ConcurrentDictionary<MyPlayer.PlayerId, long>>("m_playerIdentityIds")[id] =
-                    ob.IdentityId;
-                Sync.Players.GetPrivateField<Dictionary<long, MyPlayer.PlayerId>>("m_identityPlayerIds")
-                    [ob.IdentityId] = id;
+                Sync.Players.m_playerIdentityIds[id] = ob.IdentityId;
+                Sync.Players.m_identityPlayerIds[ob.IdentityId] = id;
 
                 identitiesToChange[identityId] = ob.IdentityId;
             }

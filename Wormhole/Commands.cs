@@ -50,8 +50,7 @@ namespace Wormhole
             foreach (var wormholeGate in Plugin.Config.WormholeGates)
             {
                 var gps = wormholeGate.ToGps();
-                foreach (var (_, identityId) in Sync.Players
-                    .GetPrivateField<ConcurrentDictionary<MyPlayer.PlayerId, long>>("m_playerIdentityIds"))
+                foreach (var (_, identityId) in Sync.Players.m_playerIdentityIds)
                 {
                     MySession.Static.Gpss.AddPlayerGps(identityId, ref gps);
                 }

@@ -5,6 +5,6 @@
     <RestoreAdditionalProjectSources>https://nuget.storage.yandexcloud.net/index.json</RestoreAdditionalProjectSources>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="spaceengineersdedicated.referenceassemblies" Version="1.204.17" ExcludeAssets="runtime" />
+    <PackageReference Include="spaceengineersdedicated.referenceassemblies" Version="1.*" ExcludeAssets="runtime" />
   </ItemGroup>
 </Project>
