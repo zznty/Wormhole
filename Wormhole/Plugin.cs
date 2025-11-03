@@ -310,7 +310,7 @@ namespace Wormhole
                 return;
             }
 
-            wormholeDrive.CurrentStoredPower = 0;
+            wormholeDrive.SetStoredPower(0);
             _clientEffectsManager.NotifyJumpStatusChanged(JumpStatus.Perform, gateViewModel, grid, freePos);
 
             MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);
@@ -356,7 +356,7 @@ namespace Wormhole
                     return;
                 }
 
-                wormholeDrive.CurrentStoredPower = 0;
+                wormholeDrive.SetStoredPower(0);
                 _clientEffectsManager.NotifyJumpStatusChanged(JumpStatus.Perform, gateViewModel, grid, freePos);
 
                 MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);
@@ -387,7 +387,7 @@ namespace Wormhole
                 
                 var filename = transferFileInfo.CreateFileName();
 
-                wormholeDrive.CurrentStoredPower = 0;
+                wormholeDrive.SetStoredPower(0);
                 _clientEffectsManager.NotifyJumpStatusChanged(JumpStatus.Perform, gateViewModel, grid);
 
                 MyVisualScriptLogicProvider.CreateLightning(gateViewModel.Position);

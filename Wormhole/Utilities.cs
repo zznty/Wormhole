@@ -190,7 +190,7 @@ namespace Wormhole
         public static void KillCharacter(MyCharacter character)
         {
             Log.Info("killing character " + character.DisplayName);
-            if (character.IsUsing is MyCockpit cockpit)
+            if (character.UsingEntity is MyCockpit cockpit)
                 cockpit.RemovePilot();
             character.GetIdentity()?.ChangeCharacter(null);
 
